@@ -454,9 +454,7 @@ body {
   box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.05);
 }
 
-.node-collapsed {
-  opacity: 0.6;
-}
+
 
 .hidden-children {
   display: none;
@@ -639,4 +637,127 @@ body {
     -webkit-touch-callout: none;
     user-select: none;
   }
+}
+
+/* --- Traditional View Mode --- */
+/* Wrapper changes */
+.traditional-mode.mindmap-content {
+  display: block !important;
+  text-align: left;
+  padding: 20px;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+}
+
+.traditional-mode .tree-branch {
+  display: block;
+  margin-left: 20px;
+  /* Standard indentation */
+  position: relative;
+  border-left: 1px dashed #ccc;
+  /* Guide line */
+  padding-left: 0 !important;
+  /* Override mobile styling if needed */
+  align-items: flex-start;
+}
+
+/* Remove horizontal connectors/lines */
+.traditional-mode .tree-branch::before,
+.traditional-mode .tree-branch::after,
+.traditional-mode .node-wrapper::before,
+.traditional-mode .node-wrapper::after {
+  display: none !important;
+}
+
+/* Reset node content styling to look like code */
+.traditional-mode .node-content {
+  display: inline-flex;
+  /* Keep inline */
+  background: transparent !important;
+  /* No background */
+  border: none !important;
+  /* No border */
+  padding: 2px 0 !important;
+  margin: 0;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  color: #333;
+  /* Default text color */
+}
+
+/* Override Key/Value colors for Syntax Highlighting look */
+.traditional-mode .key-text {
+  color: #881391;
+  /* Json Key Color (Purple-ish) */
+  font-weight: normal;
+}
+
+.traditional-mode .key-text::after {
+  content: ": ";
+  color: #333;
+}
+
+.traditional-mode .val-text.type-string {
+  color: #c41a16;
+}
+
+/* Red */
+.traditional-mode .val-text.type-number {
+  color: #1c00cf;
+}
+
+/* Blue */
+.traditional-mode .val-text.type-boolean {
+  color: #0d22aa;
+  font-weight: bold;
+}
+
+/* Dark Blue */
+.traditional-mode .val-text.type-null {
+  color: #808080;
+  font-style: italic;
+}
+
+/* In Traditional Mode, we want the children to sit UNDER the parent, not next to it. */
+.traditional-mode .children-container {
+  display: block;
+  /* Force block layout */
+  margin-left: 0;
+  padding-left: 0;
+  border-left: none;
+}
+
+/* Dark Mode support */
+@media (prefers-color-scheme: dark) {
+  .traditional-mode .tree-branch {
+    border-left-color: #444;
+  }
+
+  .traditional-mode .node-content {
+    color: #d4d4d4;
+  }
+
+  .traditional-mode .key-text {
+    color: #9cdcfe;
+  }
+
+  /* VS Code Blue */
+  .traditional-mode .key-text::after {
+    color: #d4d4d4;
+  }
+
+  .traditional-mode .val-text.type-string {
+    color: #ce9178;
+  }
+
+  /* Orange */
+  .traditional-mode .val-text.type-number {
+    color: #b5cea8;
+  }
+
+  /* Green */
+  .traditional-mode .val-text.type-boolean {
+    color: #569cd6;
+  }
+
+  /* Blue */
 }

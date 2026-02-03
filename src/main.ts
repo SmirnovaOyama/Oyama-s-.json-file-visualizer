@@ -14,6 +14,9 @@ let renderer: TreeRenderer;
 const canvas = document.getElementById('canvas') as HTMLDivElement;
 const fileInput = document.getElementById('fileInput') as HTMLInputElement;
 
+// State
+let isTraditionalView = false;
+
 // Modals
 const pasteModal = document.getElementById('pasteModal') as HTMLDialogElement;
 const editModal = document.getElementById('editModal') as HTMLDialogElement;
@@ -125,6 +128,20 @@ function setupEventListeners() {
     t = i18n[currentLang];
     renderer.updateLanguage();
     applyTranslations();
+  };
+
+  document.getElementById('viewToggleBtn')!.onclick = (e) => {
+    isTraditionalView = !isTraditionalView;
+    const btn = (e.currentTarget as HTMLButtonElement);
+
+    if (isTraditionalView) {
+      treeRoot.classList.add('traditional-mode');
+      // Reset transform when entering traditional mode for better reading
+      treeRoot.style.transform = `translate(0px, 0px) scale(1)`;
+    } else {
+      treeRoot.classList.remove('traditional-mode');
+      // We could restore previous pan/zoom here if we stored it
+    }
   };
 
   // 2. Context Menu Actions

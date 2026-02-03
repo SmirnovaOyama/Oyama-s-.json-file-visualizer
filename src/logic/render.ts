@@ -85,18 +85,25 @@ export class TreeRenderer {
             const childrenBlock = this.renderChildren(value, depth, path);
 
             // Expand/Collapse logic
-            let expanded = true;
+            // We do not rely on a local 'expanded' variable because 'toggleAll' changes state externally.
+            // Instead, we check the current DOM state on click.
             nodeContent.addEventListener('click', (e) => {
-                if (e.altKey) return; // Let context menu handle it
-                expanded = !expanded;
-                childrenBlock.style.display = expanded ? 'flex' : 'none';
-                nodeContent.classList.toggle('node-collapsed', !expanded);
+                if (e.altKey) return;
+
+                // Determine current state based on style
+                const isCurrentlyHidden = childrenBlock.style.display === 'none';
+                const nextState = isCurrentlyHidden; // if hidden, we expand (true)
+
+                childrenBlock.style.display = nextState ? '' : 'none';
+                nodeContent.classList.toggle('node-collapsed', !nextState);
                 const icon = nodeContent.querySelector('.icon-expand');
-                if (icon) icon.textContent = expanded ? '▼' : '▶';
+                if (icon) icon.textContent = nextState ? '▼' : '▶';
             });
 
             branch.appendChild(childrenBlock);
         }
+
+
 
         return branch;
     }
@@ -188,7 +195,8 @@ export class TreeRenderer {
         const nodeContents = document.querySelectorAll('.node-content') as NodeListOf<HTMLElement>;
         const icons = document.querySelectorAll('.icon-expand') as NodeListOf<HTMLElement>;
 
-        containers.forEach(c => c.style.display = expand ? 'flex' : 'none');
+        // Use '' to revert to CSS default (flex in normal, block in traditional), 'none' to hide.
+        containers.forEach(c => c.style.display = expand ? '' : 'none');
         nodeContents.forEach(n => {
             if (expand) n.classList.remove('node-collapsed');
             else if (n.closest('.has-children')) n.classList.add('node-collapsed');
