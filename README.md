@@ -62,10 +62,10 @@ The editor tries to be smart about data types:
    ```
 
 ## Tech Stack
-- **Vite** (Build Tool)
-- **TypeScript** (Logic)
-- **Vanilla CSS** (Styling - No frameworks)
-- **HTML5** (Canvas & DOM)
+- **Vite** 
+- **TypeScript** 
+- **Vanilla CSS** 
+- **HTML5** 
 
 ---
 
