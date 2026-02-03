@@ -1,1 +1,1 @@
-# mindmap-style-Json-file-visualizer
+.json-file-visualizer
