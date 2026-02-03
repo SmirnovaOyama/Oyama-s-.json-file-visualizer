@@ -70,10 +70,10 @@ export class TreeRenderer {
         // Value
         if (!isObj) {
             this.renderPrimitiveValue(nodeContent, value);
-            this.bindEvents(nodeContent, path, false);
+            this.bindEvents(nodeContent, path);
         } else {
             this.renderContainerInfo(nodeContent, count);
-            this.bindEvents(nodeContent, path, true);
+            this.bindEvents(nodeContent, path);
         }
 
         nodeWrapper.appendChild(nodeContent);
@@ -146,7 +146,7 @@ export class TreeRenderer {
         return childrenBlock;
     }
 
-    private bindEvents(element: HTMLElement, path: JsonPath, isContainer: boolean) {
+    private bindEvents(element: HTMLElement, path: JsonPath) {
         // Right Click for Context Menu
         element.addEventListener('contextmenu', (e) => {
             e.stopPropagation();
