@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Visualizer</title>
+    <meta name="description"
+        content="A beautiful JSON visualizer with mindmap-style tree view. Upload, paste, edit and visualize your JSON data.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body>
+    <div class="json-layout">
+        <div class="mindmap-header">
+            <!-- Buttons (pointer-events:auto needed) -->
+            <div class="upload-btn-group">
+                <button class="action-btn" id="uploadBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Upload JSON
+                </button>
+                <input type="file" id="fileInput" class="file-upload-input" accept=".json">
+
+                <button class="action-btn" id="pasteBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>
+                    Paste Text
+                </button>
+
+                <button class="action-btn" id="downloadBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download
+                </button>
+
+                <button class="action-btn" id="copyBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copy
+                </button>
+
+                <button class="action-btn" id="clearBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2">
+                        </path>
+                    </svg>
+                    Clear
+                </button>
+            </div>
+            <div style="flex:1"></div>
+            <div class="upload-btn-group">
+                <button class="action-btn" id="zoomInBtn" title="Zoom In">+</button>
+                <button class="action-btn" id="zoomOutBtn" title="Zoom Out">-</button>
+                <button class="action-btn" id="resetViewBtn" title="Reset View">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>
+                    </svg>
+                </button>
+                <button class="action-btn" id="expandAllBtn">Expand All</button>
+                <button class="action-btn" id="collapseAllBtn">Collapse</button>
+                <button class="action-btn" id="langBtn" title="Switch Language">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path
+                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                        </path>
+                    </svg>
+                    <span id="langText">EN</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="mindmap-canvas" id="canvas">
+            <div class="mindmap-content" id="treeRoot">
+                <div class="empty-placeholder">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        opacity="0.3">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    <p>Open a JSON file to visualize it!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paste Modal -->
+    <dialog id="pasteModal">
+        <h3 style="margin-top:0; margin-bottom:16px; font-size:1.2rem;">Paste JSON Data</h3>
+        <textarea id="pasteArea"
+            style="width:100%; height:300px; border:2px solid #eee; border-radius:8px; padding:12px; font-family:monospace; resize:none; font-size:14px; outline:none; box-sizing: border-box;"></textarea>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+            <button class="action-btn" id="cancelPaste">Cancel</button>
+            <button class="action-btn btn-primary" id="confirmPaste">Visualize</button>
+        </div>
+    </dialog>
+
+    <!-- Edit Modal -->
+    <dialog id="editModal">
+        <h3 style="margin-top:0; margin-bottom:16px; font-size:1.2rem;">Edit Value</h3>
+        <input type="text" id="editInput"
+            style="width:100%; border:2px solid #eee; border-radius:8px; padding:12px; font-family:inherit; font-size:14px; outline:none; box-sizing: border-box;">
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+            <button class="action-btn" id="cancelEdit">Cancel</button>
+            <button class="action-btn btn-primary" id="confirmEdit">Save</button>
+        </div>
+    </dialog>
+
+    <!-- Add Node Modal -->
+    <dialog id="addNodeModal">
+        <h3 id="addNodeTitle" style="margin-top:0; margin-bottom:16px; font-size:1.2rem;">Add Node</h3>
+        <div id="addNodeKeyRow" style="margin-bottom:12px;">
+            <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Key</label>
+            <input type="text" id="addNodeKey" placeholder="key"
+                style="width:100%; border:2px solid #eee; border-radius:8px; padding:12px; font-family:inherit; font-size:14px; outline:none; box-sizing: border-box;">
+        </div>
+        <div>
+            <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Value</label>
+            <input type="text" id="addNodeValue" placeholder="value"
+                style="width:100%; border:2px solid #eee; border-radius:8px; padding:12px; font-family:inherit; font-size:14px; outline:none; box-sizing: border-box;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+            <button class="action-btn" id="cancelAddNode">Cancel</button>
+            <button class="action-btn btn-primary" id="confirmAddNode">Add</button>
+        </div>
+    </dialog>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="nodeContextMenu">
+        <div class="context-menu-item" id="ctxEditValue">
+            <svg viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Edit Value
+        </div>
+        <div class="context-menu-item" id="ctxAddNode">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14" />
+            </svg>
+            Add Node
+        </div>
+        <div class="context-menu-item" id="ctxAddObject">
+            <svg viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M12 8v8M8 12h8" />
+            </svg>
+            Add { } Group
+        </div>
+        <div class="context-menu-item" id="ctxAddArray">
+            <svg viewBox="0 0 24 24">
+                <path d="M8 6h.01M8 12h.01M8 18h.01M12 6h8M12 12h8M12 18h8" />
+            </svg>
+            Add [ ] List
+        </div>
+        <div class="context-menu-item" id="ctxRename">
+            <svg viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Rename
+        </div>
+        <div class="context-menu-item" id="ctxCopyKey">
+            <svg viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy Key
+        </div>
+        <div class="context-menu-item" id="ctxCopyValue">
+            <svg viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy Value
+        </div>
+        <div class="context-menu-item" id="ctxDelete" style="color:#E53935;">
+            <svg viewBox="0 0 24 24" style="stroke:#E53935;">
+                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+            </svg>
+            Delete
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
