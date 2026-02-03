@@ -130,9 +130,8 @@ function setupEventListeners() {
     applyTranslations();
   };
 
-  document.getElementById('viewToggleBtn')!.onclick = (e) => {
+  document.getElementById('viewToggleBtn')!.onclick = () => {
     isTraditionalView = !isTraditionalView;
-    const btn = (e.currentTarget as HTMLButtonElement);
 
     if (isTraditionalView) {
       treeRoot.classList.add('traditional-mode');
