@@ -794,18 +794,34 @@ export class TreeRenderer {
     public showInlineAdd(
         parentElement: HTMLElement,
         containerType: 'object' | 'array',
-        addType: 'node' | 'object' | 'array',
+        addType: 'node' | 'object' | 'array' | 'paste',
         onConfirm: (key: string, value: any) => void
     ) {
-        // 1. Find the tree-branch for the current node
-        const treeBranch = parentElement.closest('.tree-branch');
-        if (!treeBranch) return;
+        // 1. Identify the target container and where to append
+        let childrenBlock: HTMLElement | null = null;
 
-        // 2. Find or create children container
-        let childrenBlock = treeBranch.querySelector(':scope > .children-container') as HTMLElement;
+        // Search Strategy:
+        // A. Check sibling (works for standard tree rows and nested table rows)
+        const sibling = parentElement.nextElementSibling;
+        if (sibling && sibling.classList.contains('children-container')) {
+            childrenBlock = sibling as HTMLElement;
+        }
+
+        // B. Fallback to branch search
+        if (!childrenBlock) {
+            const treeBranch = parentElement.closest('.tree-branch');
+            if (treeBranch) {
+                childrenBlock = treeBranch.querySelector(':scope > .children-container') as HTMLElement;
+            }
+        }
+
         let innerBlock: HTMLElement;
 
         if (!childrenBlock) {
+            // Find branch to append NEW container to
+            const treeBranch = parentElement.closest('.tree-branch');
+            if (!treeBranch) return;
+
             // Create for empty container
             childrenBlock = document.createElement('div');
             childrenBlock.className = 'children-container';
@@ -822,21 +838,26 @@ export class TreeRenderer {
             if (childrenBlock.classList.contains('collapsed')) {
                 childrenBlock.classList.remove('collapsed');
                 childrenBlock.style.display = ''; // Clear potentially hidden style
-                const nodeContent = treeBranch.querySelector('.node-content');
-                if (nodeContent) {
-                    nodeContent.classList.remove('node-collapsed');
-                    const icon = nodeContent.querySelector('.icon-expand');
-                    if (icon && !document.querySelector('.traditional-mode')) icon.textContent = '▼';
-                }
-                this.collapsedPaths.delete(this.buildPathString(parentElement)); // Attempt to sync state? Hard without exact path key match logic but visual is enough.
+                const nodeContent = parentElement; // The row we clicked
+                nodeContent.classList.remove('node-collapsed');
+                const icon = nodeContent.querySelector('.icon-expand');
+                if (icon && !document.querySelector('.traditional-mode')) icon.textContent = '▼';
+
+                this.collapsedPaths.delete(this.buildPathString(parentElement));
             }
-            innerBlock = childrenBlock.querySelector('.children-inner') as HTMLElement;
+            innerBlock = childrenBlock.querySelector('.children-inner') as HTMLElement || childrenBlock;
         }
+
+        // 2. Decide EXACT append target (Table/List Card vs Branch)
+        const existingCard = innerBlock.querySelector(':scope > .table-card, :scope > .array-list-card') as HTMLElement;
+        const appendTarget = existingCard || innerBlock;
+        const isIntoCard = !!existingCard;
 
         // 3. Create Temporary Input Node
         const tempBranch = document.createElement('div');
         tempBranch.className = 'tree-branch child-branch';
         tempBranch.style.animation = 'fadeIn 0.2s ease-out';
+        if (isIntoCard) tempBranch.style.margin = '4px 8px'; // Slighter margin if inside card
 
         const tempWrapper = document.createElement('div');
         tempWrapper.className = 'node-wrapper';
@@ -844,17 +865,25 @@ export class TreeRenderer {
         const tempContent = document.createElement('div');
         tempContent.className = 'node-content';
         tempContent.style.background = '#fff';
-        tempContent.style.border = '1px dashed #3B82F6'; // Blue dashed border
+        tempContent.style.border = '1px dashed #3B82F6';
         tempContent.style.borderRadius = '4px';
-        tempContent.style.padding = '4px 8px';
-        tempContent.style.display = 'inline-flex';
-        tempContent.style.alignItems = 'center';
+        tempContent.style.padding = '8px';
+        tempContent.style.display = 'flex';
+        tempContent.style.flexDirection = 'column';
         tempContent.style.gap = '8px';
-        tempContent.style.marginLeft = '20px'; // Indent
+        tempContent.style.marginLeft = isIntoCard ? '0' : '20px'; // No indent if in card
+        tempContent.style.minWidth = '280px';
+        tempContent.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.1)';
+
+        // Inputs Wrapper
+        const inputsRow = document.createElement('div');
+        inputsRow.style.display = 'flex';
+        inputsRow.style.alignItems = 'center';
+        inputsRow.style.gap = '8px';
 
         // Inputs
         const keyInput = document.createElement('input');
-        keyInput.placeholder = 'Key';
+        keyInput.placeholder = this.t.key || 'Key';
         keyInput.style.border = 'none';
         keyInput.style.borderBottom = '1px solid #CBD5E1';
         keyInput.style.outline = 'none';
@@ -865,7 +894,7 @@ export class TreeRenderer {
         keyInput.style.color = '#334155';
 
         const valInput = document.createElement('input');
-        valInput.placeholder = 'Value';
+        valInput.placeholder = this.t.value || 'Value';
         valInput.style.border = 'none';
         valInput.style.borderBottom = '1px solid #CBD5E1';
         valInput.style.outline = 'none';
@@ -875,29 +904,46 @@ export class TreeRenderer {
         valInput.style.background = 'transparent';
         valInput.style.color = '#334155';
 
+        // Textarea for Paste
+        const pasteArea = document.createElement('textarea');
+        pasteArea.placeholder = (this.t as any).pasteJsonData || 'Paste JSON here...';
+        pasteArea.style.border = '1px solid #CBD5E1';
+        pasteArea.style.borderRadius = '4px';
+        pasteArea.style.outline = 'none';
+        pasteArea.style.fontSize = '12px';
+        pasteArea.style.width = '100%';
+        pasteArea.style.height = '120px';
+        pasteArea.style.fontFamily = 'var(--tm-font-code)';
+        pasteArea.style.background = '#F8FAFC';
+        pasteArea.style.color = '#334155';
+        pasteArea.style.padding = '8px';
+        pasteArea.style.resize = 'vertical';
+        pasteArea.style.boxSizing = 'border-box';
+
         // Logic based on types
         const showKey = containerType === 'object';
         const showValue = addType === 'node';
+        const isPaste = addType === 'paste';
 
         if (showKey) {
-            tempContent.appendChild(keyInput);
+            inputsRow.appendChild(keyInput);
             if (showValue) {
                 const sep = document.createElement('span');
                 sep.textContent = ':';
                 sep.style.color = '#94A3B8';
-                tempContent.appendChild(sep);
+                inputsRow.appendChild(sep);
             }
         }
 
         if (showValue) {
-            tempContent.appendChild(valInput);
-        } else {
+            inputsRow.appendChild(valInput);
+        } else if (!isPaste) {
             // Adding Object or Array
             if (showKey) {
                 const sep = document.createElement('span');
                 sep.textContent = ':';
                 sep.style.color = '#94A3B8';
-                tempContent.appendChild(sep);
+                inputsRow.appendChild(sep);
             }
 
             const label = document.createElement('span');
@@ -905,7 +951,7 @@ export class TreeRenderer {
             label.style.fontSize = '12px';
             label.style.color = '#64748B';
             label.textContent = addType === 'object' ? '{} (Object)' : '[] (List)';
-            tempContent.appendChild(label);
+            inputsRow.appendChild(label);
         }
 
         // Actions
@@ -913,12 +959,14 @@ export class TreeRenderer {
         confirmBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
         confirmBtn.title = "Confirm (Enter)";
         confirmBtn.style.border = 'none';
-        confirmBtn.style.background = '#EFF6FF';
+        confirmBtn.style.background = 'transparent';
         confirmBtn.style.color = '#3B82F6';
         confirmBtn.style.cursor = 'pointer';
         confirmBtn.style.borderRadius = '4px';
-        confirmBtn.style.padding = '4px';
+        confirmBtn.style.padding = '6px';
         confirmBtn.style.display = 'flex';
+        confirmBtn.style.alignItems = 'center';
+        confirmBtn.style.justifyContent = 'center';
 
         const cancelBtn = document.createElement('button');
         cancelBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
@@ -928,31 +976,36 @@ export class TreeRenderer {
         cancelBtn.style.color = '#EF4444';
         cancelBtn.style.cursor = 'pointer';
         cancelBtn.style.borderRadius = '4px';
-        cancelBtn.style.padding = '4px';
+        cancelBtn.style.padding = '6px';
         cancelBtn.style.display = 'flex';
 
-        const actionGroup = document.createElement('div');
-        actionGroup.style.display = 'flex';
-        actionGroup.style.gap = '4px';
-        actionGroup.style.marginLeft = '8px';
+        const btnGroup = document.createElement('div');
+        btnGroup.style.display = 'flex';
+        btnGroup.style.gap = '4px';
+        btnGroup.style.marginLeft = 'auto'; // Push to the right
+        btnGroup.appendChild(cancelBtn);
+        btnGroup.appendChild(confirmBtn);
+        inputsRow.appendChild(btnGroup);
 
-        actionGroup.appendChild(confirmBtn);
-        actionGroup.appendChild(cancelBtn);
-        tempContent.appendChild(actionGroup);
+        tempContent.appendChild(inputsRow);
+
+        if (isPaste) {
+            tempContent.appendChild(pasteArea);
+        }
 
         tempWrapper.appendChild(tempContent);
         tempBranch.appendChild(tempWrapper);
 
-        // Append to inner block (AT THE END)
-        innerBlock.appendChild(tempBranch);
+        // Append to inner block or card (AT THE END)
+        appendTarget.appendChild(tempBranch);
 
         // Scroll to view
         setTimeout(() => {
             tempBranch.scrollIntoView({ behavior: 'smooth', block: 'center' });
             // Focus logic
-            if (showKey) keyInput.focus();
+            if (isPaste) pasteArea.focus();
+            else if (showKey) keyInput.focus();
             else if (showValue) valInput.focus();
-            else if (showKey) keyInput.focus(); // If adding obj/array to obj, focus key
         }, 50);
 
         // Handlers
@@ -963,21 +1016,49 @@ export class TreeRenderer {
         const confirm = () => {
             const k = keyInput.value.trim();
             const v = valInput.value.trim();
+            const pv = pasteArea.value.trim();
 
-            if (showKey && !k) {
+            if (showKey && !k && (!isPaste || !pv)) {
                 keyInput.style.borderBottom = '1px solid #EF4444';
                 keyInput.focus();
                 return;
             }
 
-            let finalValue: any = v;
+            let finalValue: any = isPaste ? pv : v;
 
-            if (showValue) {
-                // Simple Type Inference if user types primitive
+            if (isPaste) {
+                try {
+                    finalValue = JSON.parse(pv);
+                    // Smart Key Inference: if key is empty and the object has 'id' or 'name', use it
+                    if (showKey && !k) {
+                        const inferredKey = finalValue.id || finalValue.name || finalValue.key;
+                        if (inferredKey) {
+                            onConfirm(String(inferredKey), finalValue);
+                            close();
+                            return;
+                        } else {
+                            keyInput.style.borderBottom = '1px solid #EF4444';
+                            keyInput.focus();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    pasteArea.style.border = '1px solid #EF4444';
+                    pasteArea.focus();
+                    return;
+                }
+            } else if (showValue) {
+                // Simple Type Inference
                 if (v === 'true') finalValue = true;
                 else if (v === 'false') finalValue = false;
                 else if (v === 'null') finalValue = null;
                 else if (!isNaN(Number(v)) && v !== '') finalValue = Number(v);
+                else {
+                    // Try parsing as JSON anyway if it looks like it
+                    if ((v.startsWith('{') && v.endsWith('}')) || (v.startsWith('[') && v.endsWith(']'))) {
+                        try { finalValue = JSON.parse(v); } catch (e) { }
+                    }
+                }
             } else {
                 if (addType === 'object') finalValue = {};
                 else if (addType === 'array') finalValue = [];
@@ -992,6 +1073,7 @@ export class TreeRenderer {
 
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Enter') {
+                if (e.target === pasteArea) return; // Allow newlines in textarea
                 e.preventDefault();
                 e.stopPropagation();
                 confirm();
@@ -1004,6 +1086,7 @@ export class TreeRenderer {
 
         keyInput.addEventListener('keydown', onKeyDown);
         valInput.addEventListener('keydown', onKeyDown);
+        pasteArea.addEventListener('keydown', onKeyDown);
     }
 
     // --- Navigation ---

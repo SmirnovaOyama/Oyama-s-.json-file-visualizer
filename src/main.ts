@@ -298,7 +298,7 @@ function setupEventListeners() {
     }
   };
 
-  const handleAdd = (addType: 'node' | 'object' | 'array') => {
+  const handleAdd = (addType: 'node' | 'object' | 'array' | 'paste') => {
     if (!activeContextPath || !activeNodeElement) return;
     contextMenu.classList.remove('visible');
 
@@ -324,6 +324,7 @@ function setupEventListeners() {
   document.getElementById('ctxAddNode')!.onclick = () => handleAdd('node');
   document.getElementById('ctxAddObject')!.onclick = () => handleAdd('object');
   document.getElementById('ctxAddArray')!.onclick = () => handleAdd('array');
+  document.getElementById('ctxPasteJSON')!.onclick = () => handleAdd('paste');
 
 
 }
@@ -414,7 +415,7 @@ function showContextMenu(x: number, y: number, path: JsonPath) {
   show('ctxAddNode', isContainer);
   show('ctxAddObject', isContainer);
   show('ctxAddArray', isContainer);
-  show('ctxAddArray', isContainer);
+  show('ctxPasteJSON', isContainer);
   show('ctxRename', !isRoot && !parentIsArray);
 
   // Copy options
@@ -518,6 +519,9 @@ function applyTranslations() {
 
   const ctxAddArr = document.getElementById('ctxAddArray');
   if (ctxAddArr && ctxAddArr.lastChild) ctxAddArr.lastChild.textContent = ' ' + t.addList;
+
+  const ctxPaste = document.getElementById('ctxPasteJSON');
+  if (ctxPaste && ctxPaste.lastChild) ctxPaste.lastChild.textContent = ' ' + (t as any).pasteJSON;
 
   const ctxEdit = document.getElementById('ctxEditValue');
   if (ctxEdit && ctxEdit.lastChild) ctxEdit.lastChild.textContent = ' ' + t.editValue;
