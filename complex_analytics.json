@@ -1,0 +1,365 @@
+{
+    "meta_info": {
+        "generated_at": 1738725600000,
+        "environment": "production-cluster-alpha",
+        "datacenter": "us-east-1",
+        "compliance_status": "compliant"
+    },
+    "dashboard_theme": {
+        "description": "Demonstrates Color Preview scaling",
+        "palette": {
+            "brand_primary": "#6366f1",
+            "brand_secondary": "#a855f7",
+            "brand_accent": "#ec4899",
+            "success_bg": "#ecfdf5",
+            "success_text": "#059669",
+            "warning_bg": "#fffbeb",
+            "warning_text": "#d97706",
+            "error_bg": "#fef2f2",
+            "error_text": "#dc2626",
+            "chart_colors": [
+                "#3b82f6",
+                "#10b981",
+                "#f59e0b",
+                "#ef4444",
+                "#8b5cf6"
+            ]
+        }
+    },
+    "infrastructure_monitor": {
+        "summary": {
+            "total_hosts": 512,
+            "healthy_hosts": 508,
+            "alerts_active": 4
+        },
+        "load_balancers": [
+            {
+                "id": "lb-prod-01",
+                "region": "us-east-1a",
+                "created_at": "2023-01-15T08:00:00Z",
+                "metrics_24h": {
+                    "request_rate_rps": [
+                        1200,
+                        1500,
+                        3000,
+                        4500,
+                        5000,
+                        5200,
+                        4800,
+                        3000,
+                        1500,
+                        800,
+                        600,
+                        500,
+                        450,
+                        400,
+                        350,
+                        400,
+                        800,
+                        2000,
+                        4000,
+                        5500,
+                        6000,
+                        5800,
+                        4000,
+                        2000
+                    ],
+                    "latency_ms": [
+                        25,
+                        26,
+                        35,
+                        45,
+                        120,
+                        85,
+                        40,
+                        30,
+                        28,
+                        25,
+                        24,
+                        24,
+                        23,
+                        23,
+                        24,
+                        25,
+                        30,
+                        45,
+                        150,
+                        200,
+                        90,
+                        40,
+                        30,
+                        28
+                    ],
+                    "error_count_5xx": [
+                        0,
+                        0,
+                        1,
+                        5,
+                        20,
+                        5,
+                        2,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        2,
+                        8,
+                        2,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            },
+            {
+                "id": "lb-prod-02",
+                "region": "us-east-1b",
+                "created_at": "2023-01-15T08:05:00Z",
+                "metrics_24h": {
+                    "request_rate_rps": [
+                        1000,
+                        1200,
+                        2800,
+                        4000,
+                        4800,
+                        5000,
+                        4500,
+                        2800,
+                        1400,
+                        750,
+                        550,
+                        480,
+                        420,
+                        380,
+                        330,
+                        380,
+                        750,
+                        1800,
+                        3800,
+                        5200,
+                        5800,
+                        5500,
+                        3800,
+                        1800
+                    ],
+                    "latency_ms": [
+                        22,
+                        24,
+                        30,
+                        60,
+                        40,
+                        35,
+                        38,
+                        28,
+                        26,
+                        24,
+                        22,
+                        22,
+                        21,
+                        21,
+                        22,
+                        24,
+                        28,
+                        40,
+                        45,
+                        55,
+                        40,
+                        35,
+                        28,
+                        26
+                    ]
+                }
+            }
+        ],
+        "database_cluster": {
+            "type": "postgres_sharded",
+            "version": "15.4",
+            "master_node": {
+                "ip": "10.0.5.10",
+                "uptime": 8645000,
+                "connections_active": 450,
+                "query_duration_percentiles": {
+                    "p50_ms": [
+                        2,
+                        2,
+                        3,
+                        2,
+                        2,
+                        2,
+                        3,
+                        4,
+                        2,
+                        2
+                    ],
+                    "p95_ms": [
+                        15,
+                        18,
+                        45,
+                        20,
+                        18,
+                        15,
+                        60,
+                        80,
+                        25,
+                        20
+                    ],
+                    "p99_ms": [
+                        50,
+                        60,
+                        200,
+                        80,
+                        60,
+                        50,
+                        350,
+                        500,
+                        100,
+                        80
+                    ]
+                },
+                "disk_iops": [
+                    500,
+                    550,
+                    600,
+                    800,
+                    1500,
+                    2000,
+                    2500,
+                    3000,
+                    2800,
+                    2000,
+                    1000,
+                    600,
+                    400,
+                    350,
+                    300,
+                    400,
+                    800,
+                    1200,
+                    1800,
+                    2200,
+                    2600,
+                    2400,
+                    1500,
+                    800
+                ]
+            }
+        }
+    },
+    "financial_realtime": {
+        "market_status": "open",
+        "last_update": 1709600000000,
+        "tickers": [
+            {
+                "symbol": "AAPL",
+                "last_price": 175.50,
+                "change_pct": 1.25,
+                "intraday_curve": [
+                    172.5,
+                    173.0,
+                    172.8,
+                    173.5,
+                    174.0,
+                    174.2,
+                    173.9,
+                    174.5,
+                    175.0,
+                    175.2,
+                    174.8,
+                    175.5
+                ]
+            },
+            {
+                "symbol": "GOOGL",
+                "last_price": 140.20,
+                "change_pct": -0.5,
+                "intraday_curve": [
+                    142.0,
+                    141.8,
+                    141.5,
+                    141.0,
+                    140.5,
+                    140.8,
+                    140.2,
+                    140.0,
+                    140.2,
+                    140.5,
+                    140.2,
+                    140.2
+                ]
+            },
+            {
+                "symbol": "MSFT",
+                "last_price": 415.00,
+                "change_pct": 0.8,
+                "intraday_curve": [
+                    410,
+                    411,
+                    412,
+                    411,
+                    412,
+                    413,
+                    414,
+                    413,
+                    414,
+                    415,
+                    415,
+                    415
+                ]
+            },
+            {
+                "symbol": "BTC-USD",
+                "last_price": 65000,
+                "change_pct": 5.2,
+                "volatility_index": 0.8,
+                "price_history_1h": [
+                    62000,
+                    62500,
+                    62400,
+                    63000,
+                    62800,
+                    63500,
+                    64000,
+                    63800,
+                    64500,
+                    64200,
+                    64800,
+                    65000
+                ]
+            }
+        ]
+    },
+    "deep_nesting_test": {
+        "level_1": {
+            "level_2": {
+                "level_3": {
+                    "level_4": {
+                        "level_5": {
+                            "target_found": true,
+                            "secret_code": "#1a1a1a",
+                            "access_time": 1735689600,
+                            "signal_strength": [
+                                10,
+                                20,
+                                40,
+                                80,
+                                100,
+                                80,
+                                40,
+                                20,
+                                10,
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

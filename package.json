@@ -1,14 +1,17 @@
 {
     "name": "json-visualizer",
     "version": "1.0.0",
-    "description": "A beautiful JSON visualizer with mindmap-style tree view",
+    "description": "A beautiful JSON visualizer with interactive tree view",
     "type": "module",
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build",
         "preview": "vite preview"
     },
-    "dependencies": {},
+    "dependencies": {
+        "@types/d3": "^7.4.3",
+        "d3": "^7.9.0"
+    },
     "devDependencies": {
         "typescript": "^5.0.0",
         "vite": "^6.0.0"

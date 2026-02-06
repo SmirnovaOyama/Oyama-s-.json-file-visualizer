@@ -5,6 +5,8 @@ export type JsonPath = (string | number)[];
 export class JsonStore {
     private data: JsonValue | null = null;
     private listeners: (() => void)[] = [];
+    private history: string[] = [];  // Undo history (JSON strings)
+    private maxHistory = 50;
 
     constructor(initialData: JsonValue | null = null) {
         this.data = initialData;
@@ -14,9 +16,34 @@ export class JsonStore {
         return this.data;
     }
 
-    set(data: JsonValue | null) {
+    set(data: JsonValue | null, saveHistory = true) {
+        // Save current state to history before changing
+        if (saveHistory && this.data !== null) {
+            this.pushHistory();
+        }
         this.data = data;
         this.notify();
+    }
+
+    private pushHistory() {
+        if (this.data !== null) {
+            this.history.push(JSON.stringify(this.data));
+            if (this.history.length > this.maxHistory) {
+                this.history.shift();
+            }
+        }
+    }
+
+    undo(): boolean {
+        if (this.history.length === 0) return false;
+        const prev = this.history.pop()!;
+        this.data = JSON.parse(prev);
+        this.notify();
+        return true;
+    }
+
+    canUndo(): boolean {
+        return this.history.length > 0;
     }
 
     subscribe(listener: () => void) {
@@ -42,26 +69,29 @@ export class JsonStore {
 
     updateValue(path: JsonPath, value: any) {
         if (!this.data) return;
+        this.pushHistory();  // Save before modification
 
         const parentPath = path.slice(0, -1);
         const key = path[path.length - 1];
         const target = parentPath.length === 0 ? this.data : this.getAt(parentPath);
 
         // Type normalization
+        // Type normalization
         let finalVal = value;
-        const strVal = String(value).trim();
-
-        if (strVal.startsWith('"') && strVal.endsWith('"')) {
-            // Explicit string (strip quotes)
-            finalVal = strVal.slice(1, -1);
-        } else if (value === 'true') {
-            finalVal = true;
-        } else if (value === 'false') {
-            finalVal = false;
-        } else if (value === 'null') {
-            finalVal = null;
-        } else if (!isNaN(Number(value)) && strVal !== '') {
-            finalVal = Number(value);
+        if (typeof value === 'string') {
+            const strVal = value.trim();
+            if (strVal.startsWith('"') && strVal.endsWith('"')) {
+                // Explicit string (strip quotes)
+                finalVal = strVal.slice(1, -1);
+            } else if (strVal === 'true') {
+                finalVal = true;
+            } else if (strVal === 'false') {
+                finalVal = false;
+            } else if (strVal === 'null') {
+                finalVal = null;
+            } else if (!isNaN(Number(strVal)) && strVal !== '') {
+                finalVal = Number(strVal);
+            }
         }
 
         (target as any)[key] = finalVal;
@@ -70,6 +100,7 @@ export class JsonStore {
 
     renameKey(path: JsonPath, newKey: string) {
         if (!this.data) return;
+        this.pushHistory();  // Save before modification
 
         const parentPath = path.slice(0, -1);
         const oldKey = path[path.length - 1] as string;
@@ -98,22 +129,26 @@ export class JsonStore {
     }
 
     addNode(path: JsonPath, key: string, value: any) {
+        this.pushHistory();  // Save before modification
         const target = path.length === 0 ? this.data : this.getAt(path);
 
         // Normalize value
+        // Normalize value
         let finalVal = value;
-        const strVal = String(value).trim();
 
-        if (strVal.startsWith('"') && strVal.endsWith('"')) {
-            finalVal = strVal.slice(1, -1);
-        } else if (value === 'true') {
-            finalVal = true;
-        } else if (value === 'false') {
-            finalVal = false;
-        } else if (value === 'null') {
-            finalVal = null;
-        } else if (!isNaN(Number(value)) && strVal !== '') {
-            finalVal = Number(value);
+        if (typeof value === 'string') {
+            const strVal = value.trim();
+            if (strVal.startsWith('"') && strVal.endsWith('"')) {
+                finalVal = strVal.slice(1, -1);
+            } else if (strVal === 'true') {
+                finalVal = true;
+            } else if (strVal === 'false') {
+                finalVal = false;
+            } else if (strVal === 'null') {
+                finalVal = null;
+            } else if (!isNaN(Number(strVal)) && strVal !== '') {
+                finalVal = Number(strVal);
+            }
         }
 
         if (Array.isArray(target)) {
@@ -129,6 +164,7 @@ export class JsonStore {
 
     deleteNode(path: JsonPath) {
         if (path.length === 0) throw new Error("Cannot delete root");
+        this.pushHistory();  // Save before modification
 
         const parentPath = path.slice(0, -1);
         const key = path[path.length - 1];

@@ -1,0 +1,178 @@
+{
+    "app_info": {
+        "name": "Smart Dashboard Demo",
+        "version": "2.5.0",
+        "primary_color": "#0969da",
+        "secondary_color": "#2da44e",
+        "error_color": "#cf222e",
+        "bg_color": "#f6f8fa"
+    },
+    "server_metrics": {
+        "uptime_seconds": 1234567,
+        "last_reboot": 1704067200,
+        "maintenance_window": {
+            "start": "2024-05-01T02:00:00Z",
+            "end": "2024-05-01T06:00:00Z"
+        },
+        "cpu_load_per_core_history": {
+            "core_0": [
+                12,
+                15,
+                18,
+                45,
+                80,
+                95,
+                60,
+                40,
+                25,
+                15,
+                12,
+                10
+            ],
+            "core_1": [
+                50,
+                52,
+                55,
+                53,
+                50,
+                48,
+                50,
+                52,
+                55,
+                60,
+                65,
+                70
+            ],
+            "core_2": [
+                5,
+                5,
+                5,
+                5,
+                100,
+                100,
+                5,
+                5,
+                5,
+                5,
+                5,
+                5
+            ],
+            "core_3": [
+                30,
+                40,
+                35,
+                45,
+                30,
+                40,
+                35,
+                45,
+                30,
+                40,
+                35,
+                45
+            ]
+        },
+        "network_traffic": {
+            "inbound_mbps": [
+                10,
+                20,
+                80,
+                150,
+                200,
+                180,
+                120,
+                50,
+                20,
+                10
+            ],
+            "outbound_mbps": [
+                5,
+                5,
+                10,
+                20,
+                25,
+                20,
+                10,
+                5,
+                5,
+                5
+            ]
+        }
+    },
+    "iot_devices": [
+        {
+            "device_id": "sensor-alpha",
+            "status": "active",
+            "led_indicator": "#00ff00",
+            "last_ping": 1709500000000,
+            "temperature_log": [
+                22.5,
+                22.8,
+                23.1,
+                23.5,
+                24.0,
+                24.2,
+                23.8,
+                23.0
+            ]
+        },
+        {
+            "device_id": "sensor-beta",
+            "status": "warning",
+            "led_indicator": "#ffa500",
+            "last_ping": 1709490000000,
+            "temperature_log": [
+                40,
+                42,
+                45,
+                48,
+                50,
+                55,
+                60,
+                65
+            ],
+            "error_codes": [
+                101,
+                404,
+                500
+            ]
+        },
+        {
+            "device_id": "sensor-gamma",
+            "status": "offline",
+            "led_indicator": "#666666",
+            "last_ping": 1600000000,
+            "temperature_log": [
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        }
+    ],
+    "user_sessions": {
+        "active_count": 42,
+        "session_trends": [
+            10,
+            12,
+            25,
+            42,
+            38,
+            45,
+            50,
+            60,
+            42
+        ],
+        "recent_logins": [
+            {
+                "user": "admin",
+                "at": "2024-03-01T10:00:00"
+            },
+            {
+                "user": "guest",
+                "at": "2024-03-01T10:05:00"
+            }
+        ]
+    }
+}

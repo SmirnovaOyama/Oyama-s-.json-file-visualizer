@@ -43,7 +43,12 @@ export const i18n = {
         msgSaved: 'Value Saved',
         msgAdded: 'Node Added',
         msgDeleted: 'Node Deleted',
-        msgCleared: 'Cleared All Data'
+        msgCleared: 'Cleared All Data',
+
+        viewTraditional: 'Traditional',
+        saveLocal: 'Save',
+        savedLocally: 'Saved locally!',
+        loadedFromLocal: 'Loaded from local storage'
     },
     zh: {
         uploadJson: '上传 JSON',
@@ -88,7 +93,62 @@ export const i18n = {
         msgSaved: '已保存',
         msgAdded: '已添加',
         msgDeleted: '已删除',
-        msgCleared: '数据已清空'
+        msgCleared: '数据已清空',
+
+        viewTraditional: '传统视图',
+        saveLocal: '保存',
+        savedLocally: '已保存到本地！',
+        loadedFromLocal: '已从本地加载'
+    },
+    ja: {
+        uploadJson: 'アップロード',
+        pasteText: '貼り付け',
+        download: 'ダウンロード',
+        copy: 'コピー',
+        copied: 'コピー完了!',
+        clear: 'クリア',
+        expandAll: '展開',
+        collapse: '折畳',
+        editValue: '値を編集',
+        addNode: 'ノードを追加',
+        addGroup: '{ } グループを追加',
+        addList: '[ ] リストを追加',
+        rename: '名前を変更',
+        delete: '削除',
+        pasteJsonData: 'JSONデータを貼り付け',
+        cancel: 'キャンセル',
+        visualize: '可視化',
+        save: '保存',
+        add: '追加',
+        key: 'キー',
+        value: '値',
+        renameKey: 'キー名を変更',
+        addNodeTitle: 'ノードを追加',
+        addValueToList: 'リストに値を追加',
+        addGroupTitle: 'グループを追加',
+        addListTitle: 'リストを追加',
+        nameLabel: '名前',
+        emptyPlaceholder: 'JSONファイルを開いて可視化しましょう！',
+        noJsonData: 'JSONデータがありません',
+        invalidJson: '無効なJSONです',
+        clearConfirm: 'すべてのデータをクリアしますか？',
+        cannotDeleteRoot: 'ルートノードは削除できません',
+        keyRequired: 'キーは必須です',
+        keyExists: 'キーは既に存在します',
+        failedToCopy: 'コピーに失敗しました',
+        tooltip: '右クリック / 長押し',
+        copyKey: 'キーをコピー',
+        copyValue: '値をコピー',
+        msgVisualized: 'JSONを読み込みました！',
+        msgSaved: '保存しました',
+        msgAdded: '追加しました',
+        msgDeleted: '削除しました',
+        msgCleared: 'データをクリアしました',
+
+        viewTraditional: 'ツリー',
+        saveLocal: '保存',
+        savedLocally: 'ローカルに保存しました！',
+        loadedFromLocal: 'ローカルから読み込みました'
     }
 };
 

@@ -6,16 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JSON Visualizer</title>
     <meta name="description"
-        content="A beautiful JSON visualizer with mindmap-style tree view. Upload, paste, edit and visualize your JSON data.">
+        content="A beautiful JSON visualizer with tree view. Upload, paste, edit and visualize your JSON data.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/src/style.css">
 </head>
 
 <body>
     <div class="json-layout">
-        <div class="mindmap-header">
+        <div class="app-header">
             <!-- Buttons (pointer-events:auto needed) -->
             <div class="upload-btn-group">
                 <button class="action-btn" id="uploadBtn">
@@ -53,6 +55,15 @@
                     Copy
                 </button>
 
+                <button class="action-btn" id="saveLocalBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Save
+                </button>
+
                 <button class="action-btn" id="clearBtn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2">
@@ -63,51 +74,99 @@
             </div>
             <div style="flex:1"></div>
             <div class="upload-btn-group">
-                <button class="action-btn" id="zoomInBtn" title="Zoom In">+</button>
-                <button class="action-btn" id="zoomOutBtn" title="Zoom Out">-</button>
-                <button class="action-btn" id="viewToggleBtn" title="Toggle View">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="8" y1="6" x2="21" y2="6"></line>
-                        <line x1="8" y1="12" x2="21" y2="12"></line>
-                        <line x1="8" y1="18" x2="21" y2="18"></line>
-                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                    </svg>
-                </button>
-                <button class="action-btn" id="resetViewBtn" title="Reset View">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>
-                    </svg>
-                </button>
+                <div class="search-wrapper">
+                    <div class="search-container">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Search, /regex/, &quot;exact&quot;"
+                            autocomplete="off" />
+                        <span id="searchCount"></span>
+                        <div class="search-nav">
+                            <button id="searchPrevBtn" title="Previous Match">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="3">
+                                    <path d="M18 15l-6-6-6 6" />
+                                </svg>
+                            </button>
+                            <button id="searchNextBtn" title="Next Match">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="3">
+                                    <path d="M6 9l6 6 6-6" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="search-dropdown" id="searchDropdown"></div>
+                </div>
+
+
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                    <div class="zoom-display" id="zoomDisplay">100%</div>
+                    <button class="zoom-btn" id="zoomInBtn" title="Zoom In">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div style="width: 8px;"></div>
                 <button class="action-btn" id="expandAllBtn">Expand All</button>
                 <button class="action-btn" id="collapseAllBtn">Collapse</button>
-                <button class="action-btn" id="langBtn" title="Switch Language">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="2" y1="12" x2="22" y2="12"></line>
-                        <path
-                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
-                        </path>
-                    </svg>
-                    <span id="langText">EN</span>
-                </button>
+
+                <!-- Language Dropdown -->
+                <div class="custom-dropdown" id="langDropdown">
+                    <div class="dropdown-trigger" id="langTrigger">
+                        <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path
+                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                            </path>
+                        </svg>
+                        <span id="langLabel">English</span>
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="langMenu">
+                        <div class="dropdown-item selected" data-value="en">English</div>
+                        <div class="dropdown-item" data-value="zh">简体中文</div>
+                        <div class="dropdown-item" data-value="ja">日本語</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="mindmap-canvas" id="canvas">
-            <div class="mindmap-content" id="treeRoot">
-                <div class="empty-placeholder">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        opacity="0.3">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="16"></line>
-                        <line x1="8" y1="12" x2="16" y2="12"></line>
-                    </svg>
-                    <p>Open a JSON file to visualize it!</p>
+        <!-- Split Panel Container -->
+        <div class="split-container">
+            <!-- Left Panel: Tree View -->
+            <div class="split-panel left-panel" id="leftPanel">
+                <div class="app-canvas" id="canvas">
+                    <div class="app-content" id="treeRoot">
+                        <div class="empty-placeholder">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" opacity="0.3">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                                <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            <p>Open a JSON file to visualize it!</p>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Removed Graph View Panel -->
         </div>
     </div>
 
@@ -125,8 +184,8 @@
     <!-- Edit Modal -->
     <dialog id="editModal">
         <h3 style="margin-top:0; margin-bottom:16px; font-size:1.2rem;">Edit Value</h3>
-        <input type="text" id="editInput"
-            style="width:100%; border:2px solid #eee; border-radius:8px; padding:12px; font-family:inherit; font-size:14px; outline:none; box-sizing: border-box;">
+        <textarea id="editInput"
+            style="width:100%; min-height: 120px; border:2px solid #eee; border-radius:8px; padding:12px; font-family:inherit; font-size:14px; outline:none; box-sizing: border-box; resize: vertical;"></textarea>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
             <button class="action-btn" id="cancelEdit">Cancel</button>
             <button class="action-btn btn-primary" id="confirmEdit">Save</button>
