@@ -20,14 +20,13 @@ let activeNodeElement: HTMLElement | null = null;
 
 // Modals
 const pasteModal = document.getElementById('pasteModal') as HTMLDialogElement;
-const editModal = document.getElementById('editModal') as HTMLDialogElement;
+
 
 
 // Context Menu
 const contextMenu = document.getElementById('nodeContextMenu') as HTMLDivElement;
 let activeContextPath: JsonPath | null = null;
-let pendingEditPath: JsonPath | null = null;
-let pendingEditType: 'value' | 'key' = 'value';
+
 
 
 // i18n
@@ -326,29 +325,7 @@ function setupEventListeners() {
   document.getElementById('ctxAddObject')!.onclick = () => handleAdd('object');
   document.getElementById('ctxAddArray')!.onclick = () => handleAdd('array');
 
-  // 3. Edit Modal
-  const editInput = document.getElementById('editInput') as HTMLTextAreaElement;
 
-  document.getElementById('confirmEdit')!.onclick = () => {
-    try {
-      if (pendingEditType === 'key') {
-        store.renameKey(pendingEditPath!, editInput.value);
-      } else {
-        store.updateValue(pendingEditPath!, editInput.value);
-      }
-      editModal.close();
-      Toast.success(t.msgSaved);
-    } catch (e) {
-      Toast.error((e as Error).message);
-    }
-  };
-  document.getElementById('cancelEdit')!.onclick = () => editModal.close();
-  editInput.onkeydown = (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault(); // Prevent newline insertion if we are saving
-      document.getElementById('confirmEdit')!.click();
-    }
-  };
 }
 
 function setupDropdowns() {
@@ -466,27 +443,7 @@ function showContextMenu(x: number, y: number, path: JsonPath) {
   }
 }
 
-function openEditModal(type: 'value' | 'key') {
-  if (!activeContextPath) return;
-  pendingEditPath = activeContextPath;
-  pendingEditType = type;
 
-  const h3 = editModal.querySelector('h3')!;
-  const input = document.getElementById('editInput') as HTMLTextAreaElement;
-
-  if (type === 'key') {
-    h3.textContent = t.renameKey;
-    input.value = String(activeContextPath[activeContextPath.length - 1]);
-  } else {
-    h3.textContent = t.editValue;
-    const val = store.getAt(activeContextPath);
-    input.value = String(val);
-  }
-
-  editModal.showModal();
-  input.focus();
-  input.select();
-}
 
 
 
