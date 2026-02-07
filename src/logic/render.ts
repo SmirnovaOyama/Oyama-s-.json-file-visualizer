@@ -41,15 +41,7 @@ export class TreeRenderer {
     }
 
     private renderEmptyState() {
-        this.container.innerHTML = `
-      <div class="empty-placeholder">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.3">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="16"></line>
-          <line x1="8" y1="12" x2="16" y2="12"></line>
-        </svg>
-        <p>${this.t.emptyPlaceholder}</p>
-      </div>`;
+        this.container.innerHTML = '';
     }
 
     private createBranch(key: string | number, value: JsonValue, depth: number, path: JsonPath): HTMLDivElement {
@@ -517,6 +509,37 @@ export class TreeRenderer {
             listCard.appendChild(rowWrapper);
         });
 
+        // Add drop handlers to listCard container for dropping INTO the list
+        listCard.ondragover = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            listCard.classList.add('drop-target-inside');
+        };
+
+        listCard.ondragleave = (e) => {
+            // Only remove if actually leaving the card (not entering a child)
+            const relatedTarget = e.relatedTarget as HTMLElement;
+            if (!listCard.contains(relatedTarget)) {
+                listCard.classList.remove('drop-target-inside');
+            }
+        };
+
+        listCard.ondrop = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            listCard.classList.remove('drop-target-inside');
+
+            const sourcePathRaw = e.dataTransfer?.getData('sourcePath');
+            if (!sourcePathRaw) return;
+            const sourcePath = JSON.parse(sourcePathRaw);
+
+            // Drop at end of list
+            if (this.options.onMoveNode) {
+                this.options.onMoveNode(sourcePath, [...path, items.length], 'before');
+            }
+        };
+
         nodeWrapper.appendChild(listCard);
         wrapper.appendChild(nodeWrapper);
         return wrapper;
@@ -710,6 +733,45 @@ export class TreeRenderer {
 
             card.appendChild(rowWrapper);
         });
+
+        // Add drop handlers to card container for dropping INTO the object
+        card.ondragover = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            card.classList.add('drop-target-inside');
+        };
+
+        card.ondragleave = (e) => {
+            // Only remove if actually leaving the card (not entering a child)
+            const relatedTarget = e.relatedTarget as HTMLElement;
+            if (!card.contains(relatedTarget)) {
+                card.classList.remove('drop-target-inside');
+            }
+        };
+
+        card.ondrop = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            card.classList.remove('drop-target-inside');
+
+            const sourcePathRaw = e.dataTransfer?.getData('sourcePath');
+            if (!sourcePathRaw) return;
+            const sourcePath = JSON.parse(sourcePathRaw);
+
+            // For objects, we need to add with a key. Use path to generate unique key
+            const existingKeys = Object.keys(obj);
+            let newKey = 'new_item';
+            let counter = 1;
+            while (existingKeys.includes(newKey)) {
+                newKey = `new_item_${counter++}`;
+            }
+
+            // Drop as a new key in the object
+            if (this.options.onMoveNode) {
+                this.options.onMoveNode(sourcePath, [...path, newKey], 'before');
+            }
+        };
 
         nodeWrapper.appendChild(card);
         branch.appendChild(nodeWrapper);

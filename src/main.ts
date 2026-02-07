@@ -3,7 +3,6 @@ import './style.css';
 import { i18n, detectLanguage, LangKey } from './i18n';
 import { JsonStore, JsonValue, JsonPath } from './logic/store';
 import { TreeRenderer } from './logic/render';
-import { GraphRenderer } from './logic/graphRenderer';
 import { Toast } from './utils/toast';
 
 // --- Initialization ---
@@ -55,41 +54,6 @@ const renderer = new TreeRenderer(treeRoot, {
     }
   }
 });
-
-// Graph Renderer
-const graphCanvas = document.getElementById('graphCanvas') as HTMLDivElement;
-let graphRenderer: GraphRenderer | null = null;
-
-// Helper function to create a wrapper element for graph nodes
-// This allows the context menu system to work with SVG elements
-function createGraphNodeWrapper(svgElement: SVGGElement, path: JsonPath): HTMLElement {
-  // Create a temporary div that mimics the structure expected by the context menu
-  const wrapper = document.createElement('div');
-  wrapper.className = 'graph-node-wrapper';
-  wrapper.setAttribute('data-path', JSON.stringify(path));
-
-  // Add key and value spans to match tree node structure
-  const keySpan = document.createElement('span');
-  keySpan.className = 'key-text';
-  const pathKey = path.length > 0 ? path[path.length - 1] : 'root';
-  keySpan.textContent = String(pathKey);
-  wrapper.appendChild(keySpan);
-
-  const valueSpan = document.createElement('span');
-  valueSpan.className = 'val-text';
-  // Get value from store
-  const value = store.getAt(path);
-  if (typeof value !== 'object' || value === null) {
-    valueSpan.textContent = String(value);
-  }
-  wrapper.appendChild(valueSpan);
-
-  // Store reference to original SVG element for potential updates
-  (wrapper as any)._svgElement = svgElement;
-  (wrapper as any)._isGraphNode = true;
-
-  return wrapper;
-}
 
 // Detail Panel Elements
 const rightPanel = document.getElementById('rightPanel') as HTMLDivElement;
@@ -421,26 +385,9 @@ function closeDetailPanel() {
 detailCloseBtn?.addEventListener('click', closeDetailPanel);
 
 function init() {
-  // Initialize Graph Renderer
-  if (graphCanvas) {
-    graphRenderer = new GraphRenderer(graphCanvas, {
-      onNodeClick: (_path, _node) => {
-        // Sync selection with tree view if needed
-      },
-      onNodeContextMenu: (e, path, _node, element) => {
-        // Use the same context menu as tree view
-        activeContextPath = path;
-        // Create a wrapper element for the context menu to work with
-        activeNodeElement = createGraphNodeWrapper(element, path);
-        showContextMenu(e.clientX, e.clientY, path);
-      }
-    });
-  }
-
   store.subscribe(() => {
     const data = store.get();
     renderer.render(data);
-    graphRenderer?.render(data);
   });
 
   // Try to load saved data from localStorage
@@ -456,14 +403,12 @@ function init() {
   } else {
     // Initial render (empty)
     renderer.render(null);
-    graphRenderer?.render(null);
   }
 
   applyTranslations();
   setupEventListeners();
   setupPanZoom();
   setupSplitDivider();
-  setupGraphControls();
 
   // Force Traditional Mode Class
   treeRoot.classList.add('traditional-mode');
@@ -544,17 +489,16 @@ function setupEventListeners() {
   document.getElementById('clearBtn')!.onclick = () => {
     if (store.get() && confirm(t.clearConfirm)) {
       store.set(null);
+      localStorage.removeItem('jsonviz-saved-data');
       Toast.info(t.msgCleared);
     }
   };
 
   document.getElementById('expandAllBtn')!.onclick = () => {
     renderer.toggleAll(true);
-    graphRenderer?.toggleAll(true);
   };
   document.getElementById('collapseAllBtn')!.onclick = () => {
     renderer.toggleAll(false);
-    graphRenderer?.toggleAll(false);
   };
 
   // View & Language Dropdowns
@@ -574,34 +518,18 @@ function setupEventListeners() {
     e.stopPropagation();
     contextMenu.classList.remove('visible');
     if (activeNodeElement && activeContextPath) {
-      // Check if this is a graph node (use graph inline edit) or tree node (use tree inline edit)
-      if ((activeNodeElement as any)._isGraphNode) {
-        // Use inline editing on graph node
-        graphRenderer?.enableInlineEditing(activeContextPath, 'value', (newVal) => {
-          store.updateValue(activeContextPath!, newVal);
-        });
-      } else {
-        renderer.enableInlineEditing(activeNodeElement, 'value', (newVal) => {
-          store.updateValue(activeContextPath!, newVal);
-        });
-      }
+      renderer.enableInlineEditing(activeNodeElement, 'value', (newVal: string) => {
+        store.updateValue(activeContextPath!, newVal);
+      });
     }
   };
 
   document.getElementById('ctxRename')!.onclick = () => {
     contextMenu.classList.remove('visible');
     if (activeNodeElement && activeContextPath) {
-      // Check if this is a graph node (use graph inline edit) or tree node (use tree inline edit)
-      if ((activeNodeElement as any)._isGraphNode) {
-        // Use inline editing on graph node
-        graphRenderer?.enableInlineEditing(activeContextPath, 'key', (newVal) => {
-          store.renameKey(activeContextPath!, newVal);
-        });
-      } else {
-        renderer.enableInlineEditing(activeNodeElement, 'key', (newVal) => {
-          store.renameKey(activeContextPath!, newVal);
-        });
-      }
+      renderer.enableInlineEditing(activeNodeElement, 'key', (newVal: string) => {
+        store.renameKey(activeContextPath!, newVal);
+      });
     }
   };
 
@@ -1213,24 +1141,4 @@ function setupSplitDivider() {
   });
 }
 
-// --- Graph Controls ---
-function setupGraphControls() {
-  const zoomInBtn = document.getElementById('graphZoomIn');
-  const zoomOutBtn = document.getElementById('graphZoomOut');
-  const resetBtn = document.getElementById('graphReset');
-
-  if (zoomInBtn) {
-    zoomInBtn.onclick = () => graphRenderer?.zoomIn();
-  }
-
-  if (zoomOutBtn) {
-    zoomOutBtn.onclick = () => graphRenderer?.zoomOut();
-  }
-
-  if (resetBtn) {
-    resetBtn.onclick = () => graphRenderer?.resetView();
-  }
-}
-
 init();
-
