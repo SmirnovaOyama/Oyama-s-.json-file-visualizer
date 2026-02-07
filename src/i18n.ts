@@ -45,6 +45,7 @@ export const i18n = {
         msgAdded: 'Node Added',
         msgDeleted: 'Node Deleted',
         msgCleared: 'Cleared All Data',
+        duplicate: 'Duplicate',
 
         viewTraditional: 'Traditional',
         saveLocal: 'Save',
@@ -96,6 +97,7 @@ export const i18n = {
         msgAdded: '已添加',
         msgDeleted: '已删除',
         msgCleared: '数据已清空',
+        duplicate: '复制一份',
 
         viewTraditional: '传统视图',
         saveLocal: '保存',
@@ -147,6 +149,7 @@ export const i18n = {
         msgAdded: '追加しました',
         msgDeleted: '削除しました',
         msgCleared: 'データをクリアしました',
+        duplicate: '複製',
 
         viewTraditional: 'ツリー',
         saveLocal: '保存',

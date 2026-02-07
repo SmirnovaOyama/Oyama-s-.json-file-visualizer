@@ -4,7 +4,9 @@ import { i18n, detectLanguage } from '../i18n';
 
 interface RenderOptions {
     onNodeClick?: (e: MouseEvent, path: JsonPath, isContainer: boolean) => void;
+    onNodeSelect?: (path: JsonPath, element: HTMLElement, data: JsonValue) => void;
     onContextMenu?: (e: MouseEvent, path: JsonPath, nodeElement: HTMLElement) => void;
+    onMoveNode?: (from: JsonPath, to: JsonPath, pos: 'before' | 'after' | 'inside') => void;
 }
 
 export class TreeRenderer {
@@ -77,10 +79,29 @@ export class TreeRenderer {
         if (!isObj) {
             this.renderPrimitiveValue(nodeContent, key, value);
             this.bindEvents(nodeContent, path);
+
+            // Single click: Select primitive node
+            nodeContent.addEventListener('click', (e) => {
+                if (e.altKey) return;
+                if ((e.target as HTMLElement).isContentEditable) return;
+                e.stopPropagation();
+
+                // Clear previous selection
+                this.container.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                nodeContent.classList.add('selected');
+
+                // Trigger selection callback
+                if (this.options.onNodeSelect) {
+                    this.options.onNodeSelect(path, nodeContent, value);
+                }
+            });
         } else {
             this.renderContainerInfo(nodeContent, count, value);
             this.bindEvents(nodeContent, path);
         }
+
+        // Set data-path for collapse state tracking
+        nodeContent.setAttribute('data-path', JSON.stringify(path));
 
         nodeWrapper.appendChild(nodeContent);
         branch.appendChild(nodeWrapper);
@@ -97,10 +118,27 @@ export class TreeRenderer {
                 nodeContent.classList.add('node-collapsed');
             }
 
-            // Expand/Collapse logic
+            // Single click: Select node and show in detail panel
             nodeContent.addEventListener('click', (e) => {
                 if (e.altKey) return;
                 if ((e.target as HTMLElement).isContentEditable) return;
+                e.stopPropagation();
+
+                // Clear previous selection
+                this.container.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                nodeContent.classList.add('selected');
+
+                // Trigger selection callback
+                if (this.options.onNodeSelect) {
+                    this.options.onNodeSelect(path, nodeContent, value);
+                }
+            });
+
+            // Double click: Expand/Collapse logic
+            nodeContent.addEventListener('dblclick', (e) => {
+                if (e.altKey) return;
+                if ((e.target as HTMLElement).isContentEditable) return;
+                e.stopPropagation();
 
                 const isCollapsed = childrenBlock.classList.contains('collapsed');
 
@@ -159,18 +197,12 @@ export class TreeRenderer {
     private renderSmartBadges(container: HTMLElement, key: string | number, value: JsonValue) {
         if (typeof value !== 'string' && typeof value !== 'number') return;
 
-        // 1. Color Preview
-        if (typeof value === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(value)) {
+        // Color Preview in Search Results
+        const colorRegex = /^(#([0-9A-F]{3,4}){1,2}|(rgb|hsl)a?\(.*?\))$/i;
+        if (typeof value === 'string' && colorRegex.test(value.trim())) {
             const colorBadge = document.createElement('span');
-            colorBadge.className = 'smart-badge color-badge';
-            colorBadge.style.backgroundColor = value;
-            colorBadge.style.display = 'inline-block';
-            colorBadge.style.width = '12px';
-            colorBadge.style.height = '12px';
-            colorBadge.style.borderRadius = '2px';
-            colorBadge.style.marginLeft = '6px';
-            colorBadge.style.verticalAlign = 'middle';
-            colorBadge.style.border = '1px solid rgba(0,0,0,0.1)';
+            colorBadge.className = 'color-preview';
+            colorBadge.style.backgroundColor = value.trim();
             colorBadge.title = `Color: ${value}`;
             container.appendChild(colorBadge);
             return;
@@ -350,7 +382,7 @@ export class TreeRenderer {
             rowWrapper.className = 'array-list-row-wrapper';
 
             const row = document.createElement('div');
-            row.className = 'array-list-row';
+            row.className = `array-list-row depth-${depth % 7}`;
             row.dataset.index = String(index);
 
             // Index number
@@ -358,6 +390,13 @@ export class TreeRenderer {
             indexSpan.className = 'array-list-index';
             indexSpan.textContent = String(index);
             row.appendChild(indexSpan);
+
+            // Separator (subtle colon)
+            const separator = document.createElement('span');
+            separator.className = 'separator';
+            separator.textContent = ':';
+            separator.style.opacity = '0.4';
+            row.appendChild(separator);
 
             // Info or value based on type
             const infoSpan = document.createElement('span');
@@ -387,6 +426,23 @@ export class TreeRenderer {
 
             // Bind context menu
             this.bindEvents(row, childPath);
+
+            // Single click selection for primitive items
+            if (isPrimitive) {
+                row.addEventListener('click', (e) => {
+                    if (e.altKey) return;
+                    e.stopPropagation();
+
+                    // Clear previous selection
+                    this.container.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                    row.classList.add('selected');
+
+                    // Trigger selection callback
+                    if (this.options.onNodeSelect) {
+                        this.options.onNodeSelect(childPath, row, item);
+                    }
+                });
+            }
 
             rowWrapper.appendChild(row);
 
@@ -420,9 +476,26 @@ export class TreeRenderer {
                     row.classList.add('is-expanded');
                 }
 
-                // Toggle expand/collapse on click
+                // Single click: Select row and show in detail panel
                 row.addEventListener('click', (e) => {
                     if (e.altKey) return;
+                    e.stopPropagation();
+
+                    // Clear previous selection
+                    this.container.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                    row.classList.add('selected');
+
+                    // Trigger selection callback
+                    if (this.options.onNodeSelect) {
+                        this.options.onNodeSelect(childPath, row, item);
+                    }
+                });
+
+                // Double click: Toggle expand/collapse
+                row.addEventListener('dblclick', (e) => {
+                    if (e.altKey) return;
+                    e.stopPropagation();
+
                     const isCollapsed = childrenContainer.classList.contains('collapsed');
 
                     if (isCollapsed) {
@@ -468,7 +541,7 @@ export class TreeRenderer {
             rowWrapper.className = 'table-row-wrapper';
 
             const row = document.createElement('div');
-            row.className = 'table-row';
+            row.className = `table-row depth-${depth % 7}`;
             if (isNested) row.classList.add('table-row-nested');
 
             // Key
@@ -477,6 +550,13 @@ export class TreeRenderer {
             keySpan.textContent = key;
             row.appendChild(keySpan);
 
+            // Separator
+            const separator = document.createElement('span');
+            separator.className = 'separator';
+            separator.textContent = ':';
+            separator.style.opacity = '0.4';
+            row.appendChild(separator);
+
             // Value or info
             const valSpan = document.createElement('span');
             if (!isNested) {
@@ -484,6 +564,7 @@ export class TreeRenderer {
                 const fullVal = String(val);
                 valSpan.textContent = fullVal.length > 40 ? fullVal.substring(0, 40) + '...' : fullVal;
                 valSpan.dataset.fullValue = fullVal;
+                row.appendChild(valSpan);
                 this.renderSmartBadges(row, key, val);
             } else {
                 const arr = Array.isArray(val);
@@ -531,11 +612,29 @@ export class TreeRenderer {
                 const indicator = document.createElement('span');
                 indicator.className = 'array-list-indicator';
                 row.appendChild(indicator);
+                row.appendChild(valSpan);
             }
-            row.appendChild(valSpan);
 
             // Bind events
             this.bindEvents(row, childPath);
+
+            // Single click selection for non-nested rows
+            if (!isNested) {
+                row.addEventListener('click', (e) => {
+                    if (e.altKey) return;
+                    if ((e.target as HTMLElement).isContentEditable) return;
+                    e.stopPropagation();
+
+                    // Clear previous selection
+                    this.container.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                    row.classList.add('selected');
+
+                    // Trigger selection callback
+                    if (this.options.onNodeSelect) {
+                        this.options.onNodeSelect(childPath, row, val);
+                    }
+                });
+            }
 
             rowWrapper.appendChild(row);
 
@@ -568,7 +667,24 @@ export class TreeRenderer {
                     row.classList.add('is-expanded');
                 }
 
+                // Single click: Select row and show in detail panel
                 row.addEventListener('click', (e) => {
+                    if (e.altKey) return;
+                    if ((e.target as HTMLElement).isContentEditable) return;
+                    e.stopPropagation();
+
+                    // Clear previous selection
+                    this.container.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                    row.classList.add('selected');
+
+                    // Trigger selection callback
+                    if (this.options.onNodeSelect) {
+                        this.options.onNodeSelect(childPath, row, val);
+                    }
+                });
+
+                // Double click: Expand/Collapse
+                row.addEventListener('dblclick', (e) => {
                     if (e.altKey) return;
                     if ((e.target as HTMLElement).isContentEditable) return;
                     e.stopPropagation();
@@ -609,11 +725,71 @@ export class TreeRenderer {
 
     private bindEvents(element: HTMLElement, path: JsonPath) {
         // Right Click for Context Menu
-        element.addEventListener('contextmenu', (e) => {
-            e.stopPropagation();
+        element.oncontextmenu = (e) => {
             e.preventDefault();
             this.options.onContextMenu?.(e, path, element);
-        });
+        };
+
+        // Drag & Drop
+        element.draggable = true;
+        element.setAttribute('data-path', JSON.stringify(path));
+
+        element.ondragstart = (e) => {
+            e.stopPropagation();
+            if (e.dataTransfer) {
+                e.dataTransfer.setData('sourcePath', JSON.stringify(path));
+                e.dataTransfer.effectAllowed = 'move';
+            }
+            element.classList.add('dragging');
+            document.body.classList.add('is-dragging');
+        };
+
+        element.ondragend = () => {
+            element.classList.remove('dragging');
+            document.body.classList.remove('is-dragging');
+            this.clearDropIndicators();
+        };
+
+        element.ondragover = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const rect = element.getBoundingClientRect();
+            const y = e.clientY - rect.top;
+
+            this.clearDropIndicators(element);
+
+            if (y < rect.height * 0.25) {
+                element.classList.add('drop-target-before');
+            } else if (y > rect.height * 0.75) {
+                element.classList.add('drop-target-after');
+            } else {
+                element.classList.add('drop-target-inside');
+            }
+        };
+
+        element.ondragleave = () => {
+            element.classList.remove('drop-target-before', 'drop-target-after', 'drop-target-inside');
+        };
+
+        element.ondrop = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const sourcePathRaw = e.dataTransfer?.getData('sourcePath');
+            if (!sourcePathRaw) return;
+            const sourcePath = JSON.parse(sourcePathRaw);
+
+            let pos: 'before' | 'after' | 'inside' = 'inside';
+            if (element.classList.contains('drop-target-before')) pos = 'before';
+            else if (element.classList.contains('drop-target-after')) pos = 'after';
+
+            this.clearDropIndicators();
+
+            if (this.options.onMoveNode) {
+                this.options.onMoveNode(sourcePath, path, pos);
+            }
+        };
 
         // Alt+Click (Keep as backup)
         element.addEventListener('click', (e) => {
@@ -655,8 +831,31 @@ export class TreeRenderer {
         const icons = document.querySelectorAll('.icon-expand') as NodeListOf<HTMLElement>;
 
         containers.forEach(c => {
-            if (expand) c.classList.remove('collapsed');
-            else c.classList.add('collapsed');
+            if (expand) {
+                c.classList.remove('collapsed');
+            } else {
+                c.classList.add('collapsed');
+                // Find the path from the parent element
+                const branch = c.closest('.tree-branch');
+                const nodeContent = branch?.querySelector(':scope > .node-wrapper > .node-content') as HTMLElement;
+                const arrayListRow = c.previousElementSibling as HTMLElement;
+                const tableRow = c.previousElementSibling as HTMLElement;
+
+                let pathAttr: string | null = null;
+
+                // Try multiple sources to get the path
+                if (nodeContent?.hasAttribute('data-path')) {
+                    pathAttr = nodeContent.getAttribute('data-path');
+                } else if (arrayListRow?.classList.contains('array-list-row')) {
+                    pathAttr = arrayListRow.getAttribute('data-path');
+                } else if (tableRow?.classList.contains('table-row')) {
+                    pathAttr = tableRow.getAttribute('data-path');
+                }
+
+                if (pathAttr) {
+                    this.collapsedPaths.add(pathAttr);
+                }
+            }
 
             // Clean inline style if any remnants exist (from old code)
             c.style.display = '';
@@ -843,7 +1042,10 @@ export class TreeRenderer {
                 const icon = nodeContent.querySelector('.icon-expand');
                 if (icon && !document.querySelector('.traditional-mode')) icon.textContent = '▼';
 
-                this.collapsedPaths.delete(this.buildPathString(parentElement));
+                const pathAttr = parentElement.getAttribute('data-path');
+                if (pathAttr) {
+                    this.collapsedPaths.delete(pathAttr);
+                }
             }
             innerBlock = childrenBlock.querySelector('.children-inner') as HTMLElement || childrenBlock;
         }
@@ -1394,15 +1596,41 @@ export class TreeRenderer {
                 const branch = parent.parentElement;
                 if (branch) {
                     const wrapper = branch.querySelector('.node-wrapper');
-                    const content = wrapper?.querySelector('.node-content');
+                    const content = wrapper?.querySelector('.node-content') as HTMLElement;
                     if (content) {
                         content.classList.remove('node-collapsed');
+                        content.classList.add('is-expanded');
                         const icon = content.querySelector('.icon-expand');
                         if (icon && !document.querySelector('.traditional-mode')) icon.textContent = '▼';
+
+                        // Sync with collapsedPaths
+                        const pathAttr = content.getAttribute('data-path');
+                        if (pathAttr) {
+                            this.collapsedPaths.delete(pathAttr);
+                        }
+                    }
+                }
+
+                // Also handle array-list-row and table-row siblings
+                const siblingRow = parent.previousElementSibling as HTMLElement;
+                if (siblingRow?.classList.contains('array-list-row') || siblingRow?.classList.contains('table-row')) {
+                    siblingRow.classList.remove('node-collapsed');
+                    siblingRow.classList.add('is-expanded');
+                    const pathAttr = siblingRow.getAttribute('data-path');
+                    if (pathAttr) {
+                        this.collapsedPaths.delete(pathAttr);
                     }
                 }
             }
             parent = parent.parentElement;
         }
+    }
+    private clearDropIndicators(except?: HTMLElement) {
+        const classes = ['drop-target-before', 'drop-target-after', 'drop-target-inside'];
+        document.querySelectorAll('.node-content, .table-row, .array-list-row').forEach(el => {
+            if (el !== except) {
+                classes.forEach(c => el.classList.remove(c));
+            }
+        });
     }
 }

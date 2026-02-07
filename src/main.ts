@@ -38,10 +38,21 @@ const renderer = new TreeRenderer(treeRoot, {
   onNodeClick: () => {
     // Optional: selection logic
   },
+  onNodeSelect: (path, _element, data) => {
+    showDetailPanel(path, data);
+  },
   onContextMenu: (e, path, element) => {
     activeContextPath = path;
     activeNodeElement = element;
     showContextMenu(e.clientX, e.clientY, path);
+  },
+  onMoveNode: (from, to, pos) => {
+    try {
+      store.moveNode(from, to, pos);
+      Toast.success('Data Reordered');
+    } catch (e) {
+      Toast.error((e as Error).message);
+    }
   }
 });
 
@@ -79,6 +90,335 @@ function createGraphNodeWrapper(svgElement: SVGGElement, path: JsonPath): HTMLEl
 
   return wrapper;
 }
+
+// Detail Panel Elements
+const rightPanel = document.getElementById('rightPanel') as HTMLDivElement;
+const detailPath = document.getElementById('detailPath') as HTMLDivElement;
+const detailContent = document.getElementById('detailContent') as HTMLDivElement;
+const detailCloseBtn = document.getElementById('detailCloseBtn') as HTMLButtonElement;
+
+// Detail Panel Logic
+function showDetailPanel(path: JsonPath, data: JsonValue) {
+  // Build clickable breadcrumb path
+  detailPath.innerHTML = '';
+
+  // Root link
+  const rootLink = document.createElement('span');
+  rootLink.className = 'breadcrumb-link';
+  rootLink.textContent = '$';
+  rootLink.onclick = () => {
+    const rootData = store.get();
+    if (rootData !== null) {
+      showDetailPanel([], rootData);
+    }
+  };
+  detailPath.appendChild(rootLink);
+
+  // Path segments
+  path.forEach((segment, index) => {
+    // Separator
+    const sep = document.createElement('span');
+    sep.className = 'breadcrumb-sep';
+    sep.textContent = ' > ';
+    detailPath.appendChild(sep);
+
+    // Segment link
+    const link = document.createElement('span');
+    link.className = 'breadcrumb-link';
+    link.textContent = String(segment);
+
+    // Make clickable except for the last one
+    if (index < path.length - 1) {
+      link.onclick = () => {
+        const targetPath = path.slice(0, index + 1);
+        const targetData = store.getAt(targetPath);
+        if (targetData !== undefined) {
+          showDetailPanel(targetPath, targetData);
+        }
+      };
+    } else {
+      link.classList.add('current');
+    }
+
+    detailPath.appendChild(link);
+  });
+
+  // Clear content
+  detailContent.innerHTML = '';
+
+  // Get the key name from path for date detection
+  const keyName = path.length > 0 ? String(path[path.length - 1]).toLowerCase() : '';
+  const isTimeKey = keyName.includes('time') || keyName.includes('date') || keyName.includes('at') || keyName.includes('on') || keyName === 'start' || keyName === 'end';
+
+  // Check if data has children
+  if (data === null || typeof data !== 'object') {
+    // Primitive value - show enhanced display
+    const valueDiv = document.createElement('div');
+    valueDiv.className = 'detail-single-value';
+
+    if (data === null) {
+      valueDiv.innerHTML = '<span class="type-null">null</span>';
+    } else if (typeof data === 'boolean') {
+      const badgeClass = data ? 'bool-badge bool-true' : 'bool-badge bool-false';
+      valueDiv.innerHTML = `<span class="${badgeClass}">${data}</span>`;
+    } else if (typeof data === 'number') {
+      // Check if it's a timestamp
+      let dateStr = '';
+      if (isTimeKey) {
+        if (data > 631152000 && data < 4102444800) {
+          dateStr = new Date(data * 1000).toLocaleString();
+        } else if (data > 631152000000 && data < 4102444800000) {
+          dateStr = new Date(data).toLocaleString();
+        }
+      }
+      if (dateStr) {
+        valueDiv.innerHTML = `
+          <div class="type-number" style="margin-bottom: 8px;">${data}</div>
+          <div class="date-badge"><svg class="date-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${dateStr}</div>
+        `;
+      } else {
+        valueDiv.innerHTML = `<span class="type-number">${data}</span>`;
+      }
+    } else if (typeof data === 'string') {
+      // Check for color
+      const colorMatch = data.match(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/);
+      // Check for date
+      let dateStr = '';
+      if (/^\d{4}-\d{2}-\d{2}/.test(data)) {
+        const d = new Date(data);
+        if (!isNaN(d.getTime())) dateStr = d.toLocaleString();
+      }
+
+      if (colorMatch) {
+        valueDiv.innerHTML = `
+          <span class="color-swatch-large" style="background-color: ${data};"></span>
+          <span class="type-string">${data}</span>
+        `;
+      } else if (dateStr) {
+        valueDiv.innerHTML = `
+          <div class="type-string" style="margin-bottom: 8px;">${data}</div>
+          <div class="date-badge"><svg class="date-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${dateStr}</div>
+        `;
+      } else {
+        valueDiv.innerHTML = `<span class="type-string">"${data}"</span>`;
+      }
+    }
+
+    detailContent.appendChild(valueDiv);
+  } else {
+    // Object or Array - show as table with sorting
+    const isArray = Array.isArray(data);
+    let sortColumn: 'key' | 'value' = 'key';
+    let sortAsc = true;
+
+    const table = document.createElement('table');
+    table.className = 'detail-table';
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    const keyHeader = document.createElement('th');
+    keyHeader.className = 'sortable active';
+    keyHeader.innerHTML = `${isArray ? 'Index' : 'Key'} <span class="sort-arrow">▲</span>`;
+
+    const valueHeader = document.createElement('th');
+    valueHeader.className = 'sortable';
+    valueHeader.innerHTML = `Value <span class="sort-arrow"></span>`;
+
+    headerRow.appendChild(keyHeader);
+    headerRow.appendChild(valueHeader);
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    table.appendChild(tbody);
+
+    // Get entries
+    const getEntries = () => {
+      return isArray
+        ? (data as JsonValue[]).map((v, i) => [i, v] as [number | string, JsonValue])
+        : Object.entries(data);
+    };
+
+    // Render rows
+    const renderRows = () => {
+      tbody.innerHTML = '';
+      let entries = getEntries();
+
+      // Sort
+      entries.sort((a, b) => {
+        let aVal: any, bVal: any;
+        if (sortColumn === 'key') {
+          aVal = a[0];
+          bVal = b[0];
+        } else {
+          aVal = a[1];
+          bVal = b[1];
+          // Handle different types
+          if (typeof aVal === 'object') aVal = JSON.stringify(aVal);
+          if (typeof bVal === 'object') bVal = JSON.stringify(bVal);
+        }
+
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortAsc ? aVal - bVal : bVal - aVal;
+        }
+        const strA = String(aVal).toLowerCase();
+        const strB = String(bVal).toLowerCase();
+        if (strA < strB) return sortAsc ? -1 : 1;
+        if (strA > strB) return sortAsc ? 1 : -1;
+        return 0;
+      });
+
+      entries.forEach(([key, value]) => {
+        const row = document.createElement('tr');
+
+        const keyCell = document.createElement('td');
+        keyCell.className = 'key-cell';
+        keyCell.textContent = String(key);
+
+        const valueCell = document.createElement('td');
+        valueCell.className = 'value-cell';
+
+        // Check if key suggests time/date
+        const keyStr = String(key).toLowerCase();
+        const isTimeKey = keyStr.includes('time') || keyStr.includes('date') || keyStr.includes('at') || keyStr.includes('on') || keyStr === 'start' || keyStr === 'end';
+
+        if (value === null) {
+          valueCell.textContent = 'null';
+          valueCell.classList.add('type-null');
+        } else if (typeof value === 'boolean') {
+          // Boolean with colored badge
+          const badge = document.createElement('span');
+          badge.className = value ? 'bool-badge bool-true' : 'bool-badge bool-false';
+          badge.textContent = String(value);
+          valueCell.appendChild(badge);
+        } else if (typeof value === 'number') {
+          // Check for timestamp
+          let dateStr = '';
+          if (isTimeKey) {
+            if (value > 631152000 && value < 4102444800) {
+              dateStr = new Date(value * 1000).toLocaleString();
+            } else if (value > 631152000000 && value < 4102444800000) {
+              dateStr = new Date(value).toLocaleString();
+            }
+          }
+
+          const numSpan = document.createElement('span');
+          numSpan.textContent = String(value);
+          numSpan.classList.add('type-number');
+          valueCell.appendChild(numSpan);
+
+          if (dateStr) {
+            const dateBadge = document.createElement('span');
+            dateBadge.className = 'date-badge-inline';
+            dateBadge.innerHTML = `<svg class="date-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${dateStr}`;
+            valueCell.appendChild(dateBadge);
+          }
+        } else if (typeof value === 'string') {
+          // Check if it's a color value
+          const colorMatch = value.match(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/);
+          // Check for ISO date
+          let dateStr = '';
+          if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+            const d = new Date(value);
+            if (!isNaN(d.getTime())) dateStr = d.toLocaleString();
+          }
+
+          if (colorMatch) {
+            // Color preview
+            const colorSwatch = document.createElement('span');
+            colorSwatch.className = 'color-swatch';
+            colorSwatch.style.backgroundColor = value;
+            valueCell.appendChild(colorSwatch);
+
+            const colorText = document.createElement('span');
+            colorText.textContent = value;
+            colorText.classList.add('type-string');
+            valueCell.appendChild(colorText);
+          } else {
+            const textSpan = document.createElement('span');
+            textSpan.textContent = value.length > 100 ? value.substring(0, 100) + '...' : value;
+            textSpan.classList.add('type-string');
+            valueCell.appendChild(textSpan);
+
+            if (dateStr) {
+              const dateBadge = document.createElement('span');
+              dateBadge.className = 'date-badge-inline';
+              dateBadge.innerHTML = `<svg class="date-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${dateStr}`;
+              valueCell.appendChild(dateBadge);
+            }
+          }
+        } else if (Array.isArray(value)) {
+          valueCell.textContent = `[${value.length} items]`;
+          valueCell.classList.add('type-array');
+          valueCell.onclick = () => showDetailPanel([...path, key], value);
+        } else {
+          valueCell.textContent = `{${Object.keys(value).length} keys}`;
+          valueCell.classList.add('type-object');
+          valueCell.onclick = () => showDetailPanel([...path, key], value);
+        }
+
+        row.appendChild(keyCell);
+        row.appendChild(valueCell);
+        tbody.appendChild(row);
+      });
+    };
+
+    // Update header arrows
+    const updateHeaders = () => {
+      const arrow = sortAsc ? '▲' : '▼';
+      if (sortColumn === 'key') {
+        keyHeader.classList.add('active');
+        valueHeader.classList.remove('active');
+        keyHeader.querySelector('.sort-arrow')!.textContent = arrow;
+        valueHeader.querySelector('.sort-arrow')!.textContent = '';
+      } else {
+        keyHeader.classList.remove('active');
+        valueHeader.classList.add('active');
+        keyHeader.querySelector('.sort-arrow')!.textContent = '';
+        valueHeader.querySelector('.sort-arrow')!.textContent = arrow;
+      }
+    };
+
+    // Click handlers
+    keyHeader.onclick = () => {
+      if (sortColumn === 'key') {
+        sortAsc = !sortAsc;
+      } else {
+        sortColumn = 'key';
+        sortAsc = true;
+      }
+      updateHeaders();
+      renderRows();
+    };
+
+    valueHeader.onclick = () => {
+      if (sortColumn === 'value') {
+        sortAsc = !sortAsc;
+      } else {
+        sortColumn = 'value';
+        sortAsc = true;
+      }
+      updateHeaders();
+      renderRows();
+    };
+
+    renderRows();
+    detailContent.appendChild(table);
+  }
+
+  // Open panel
+  rightPanel.classList.add('open');
+}
+
+function closeDetailPanel() {
+  rightPanel.classList.remove('open');
+  // Clear selection
+  treeRoot.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+}
+
+// Detail panel close button
+detailCloseBtn?.addEventListener('click', closeDetailPanel);
 
 function init() {
   // Initialize Graph Renderer
@@ -298,6 +638,13 @@ function setupEventListeners() {
     }
   };
 
+  document.getElementById('ctxDuplicate')!.onclick = () => {
+    if (!activeContextPath) return;
+    store.duplicateNode(activeContextPath);
+    Toast.success(t.msgAdded);
+    contextMenu.classList.remove('visible');
+  };
+
   const handleAdd = (addType: 'node' | 'object' | 'array' | 'paste') => {
     if (!activeContextPath || !activeNodeElement) return;
     contextMenu.classList.remove('visible');
@@ -416,6 +763,7 @@ function showContextMenu(x: number, y: number, path: JsonPath) {
   show('ctxAddObject', isContainer);
   show('ctxAddArray', isContainer);
   show('ctxPasteJSON', isContainer);
+  show('ctxDuplicate', !isRoot);
   show('ctxRename', !isRoot && !parentIsArray);
 
   // Copy options
@@ -505,8 +853,11 @@ function applyTranslations() {
   const ctxVal = document.getElementById('ctxCopyValue');
   if (ctxVal && ctxVal.lastChild) ctxVal.lastChild.textContent = ' ' + t.copyValue;
 
-  const ctxRename = document.getElementById('ctxRename');
-  if (ctxRename && ctxRename.lastChild) ctxRename.lastChild.textContent = ' ' + t.rename;
+  const ctxRen = document.getElementById('ctxRename');
+  if (ctxRen && ctxRen.lastChild) ctxRen.lastChild.textContent = ' ' + t.rename;
+
+  const ctxDup = document.getElementById('ctxDuplicate');
+  if (ctxDup && ctxDup.lastChild) ctxDup.lastChild.textContent = ' ' + (t as any).duplicate;
 
   const ctxDelete = document.getElementById('ctxDelete');
   if (ctxDelete && ctxDelete.lastChild) ctxDelete.lastChild.textContent = ' ' + t.delete;
@@ -596,11 +947,16 @@ const renderSearchDropdown = (query: string) => {
     // Build title with key and value on separate lines if value exists
     let titleHtml = '';
     if (s.value !== null) {
+      // Color Preview in Search Results
+      const colorRegex = /^(#([0-9A-F]{3,4}){1,2}|(rgb|hsl)a?\(.*?\))$/i;
+      const isColor = typeof s.value === 'string' && colorRegex.test(s.value.trim());
+      const colorBadge = isColor ? `<span class="color-preview" style="background-color: ${s.value.trim()}"></span>` : '';
+
       titleHtml = `
         <div class="search-suggestion-row">
           <span class="match-key">${escapeHtml(s.key)}</span>
           <span class="match-separator">:</span>
-          <span class="match-value ${typeClass}">${escapeHtml(displayValue || '')}</span>
+          <span class="match-value ${typeClass}">${escapeHtml(displayValue || '')}</span>${colorBadge}
         </div>
       `;
     } else {

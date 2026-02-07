@@ -1,0 +1,98 @@
+{
+    "INFO": "https://hrt.mahiro.uk",
+    "meta": {
+        "version": 1,
+        "exportedAt": "2026-02-06T21:52:27.641Z"
+    },
+    "weight": 70,
+    "events": [
+        {
+            "id": "380ae5d2-74e9-4add-ac78-b963b531d7b3",
+            "route": "sublingual",
+            "timeH": 491569.1666666667,
+            "doseMG": 10,
+            "ester": "EV",
+            "extras": {
+                "sublingualTheta": 0.152
+            }
+        },
+        {
+            "id": "f3a11d59-29f4-4012-81ed-7d898cdd7c18",
+            "route": "sublingual",
+            "timeH": 491621.31666666665,
+            "doseMG": 12,
+            "ester": "EV",
+            "extras": {
+                "sublingualTier": 2
+            }
+        },
+        {
+            "id": "c8865005-b40b-430e-9cda-fda70b532b59",
+            "route": "sublingual",
+            "timeH": 491722.2,
+            "doseMG": 12,
+            "ester": "EV",
+            "extras": {
+                "sublingualTier": 3
+            }
+        },
+        {
+            "id": "ff374fd8-635a-440c-83c0-9c61a2acc57d",
+            "route": "sublingual",
+            "timeH": 491779.15,
+            "doseMG": 4,
+            "ester": "EV",
+            "extras": {
+                "sublingualTier": 2
+            }
+        },
+        {
+            "id": "nekoXun",
+            "route": "sublingual",
+            "timeH": 491780,
+            "doseMG": 8,
+            "ester": "EV",
+            "extras": {
+                "sublingualTier": 3
+            }
+        }
+    ],
+    "labResults": [
+        {
+            "id": "7f765a63-3511-4af0-a2b8-4301df3327be",
+            "timeH": 491654.3,
+            "concValue": 255,
+            "unit": "pg/ml"
+        },
+        {
+            "id": "48743c50-315e-434a-819d-e861337dd9bc",
+            "timeH": 491779.1666666667,
+            "concValue": 85,
+            "unit": "pg/ml"
+        }
+    ],
+    "doseTemplates": [
+        {
+            "id": "9881ee74-45aa-4db5-bb5c-7c99af1c199d",
+            "name": "1",
+            "route": "sublingual",
+            "ester": "EV",
+            "doseMG": 10,
+            "createdAt": 1769836743659,
+            "extras": {
+                "sublingualTier": 3
+            }
+        },
+        {
+            "id": "443771e7-3294-4fd7-916b-4313f747eb3a",
+            "name": "Basic Dose",
+            "route": "sublingual",
+            "ester": "EV",
+            "doseMG": 4,
+            "extras": {
+                "sublingualTier": 3
+            },
+            "createdAt": 1770405017070
+        }
+    ]
+}

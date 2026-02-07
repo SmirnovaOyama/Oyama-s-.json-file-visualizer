@@ -166,6 +166,34 @@
                 </div>
             </div>
 
+            <!-- Right Panel: Detail Sheet View -->
+            <div class="split-panel right-panel" id="rightPanel">
+                <div class="detail-panel">
+                    <div class="detail-header">
+                        <div class="detail-path" id="detailPath">Select a node to view details</div>
+                        <button class="detail-close-btn" id="detailCloseBtn" title="Close">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="detail-content" id="detailContent">
+                        <div class="detail-empty">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5" opacity="0.3">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            <p>Click on a node with children to view as table</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Removed Graph View Panel -->
         </div>
     </div>
@@ -245,6 +273,13 @@
                 <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
             </svg>
             Paste JSON
+        </div>
+        <div class="context-menu-item" id="ctxDuplicate">
+            <svg viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+            Duplicate
         </div>
         <div class="context-menu-item" id="ctxRename">
             <svg viewBox="0 0 24 24">
