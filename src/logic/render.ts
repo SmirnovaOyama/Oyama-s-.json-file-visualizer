@@ -1390,6 +1390,37 @@ export class TreeRenderer {
         return null;
     }
 
+    private createMatcher(query: string): (text: string) => boolean {
+        if (!query) return () => false;
+
+        const isRegex = query.startsWith('/') && query.length > 1;
+        const isExact = query.startsWith('"') && query.endsWith('"') && query.length > 2;
+        const hasWildcard = !isRegex && !isExact && query.includes('*');
+
+        if (isRegex) {
+            try {
+                const regex = new RegExp(query.slice(1), 'i');
+                return (text) => regex.test(text);
+            } catch {
+                return () => false;
+            }
+        } else if (isExact) {
+            const exactTerm = query.slice(1, -1).toLowerCase();
+            return (text) => text.toLowerCase() === exactTerm;
+        } else if (hasWildcard) {
+            try {
+                const escaped = query.split('*').map(s => s.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('.*');
+                const regex = new RegExp(`^${escaped}$`, 'i');
+                return (text) => regex.test(text);
+            } catch {
+                return () => false;
+            }
+        } else {
+            const term = query.toLowerCase();
+            return (text) => text.toLowerCase().includes(term);
+        }
+    }
+
     // --- Search Suggestions ---
     public getSearchSuggestions(query: string, maxResults = 8): Array<{
         key: string;
@@ -1408,7 +1439,7 @@ export class TreeRenderer {
 
         if (!query.trim()) return results;
 
-        const term = query.toLowerCase();
+        const matcher = this.createMatcher(query);
 
         // Search in node-content elements
         const nodes = this.container.querySelectorAll('.node-content');
@@ -1422,8 +1453,8 @@ export class TreeRenderer {
             const keyText = keySpan?.textContent || '';
             const valText = valSpan?.dataset.fullValue || valSpan?.textContent || '';
 
-            const matchKey = keyText.toLowerCase().includes(term);
-            const matchVal = valText.toLowerCase().includes(term);
+            const matchKey = matcher(keyText);
+            const matchVal = matcher(valText);
 
             if (matchKey || matchVal) {
                 const path = this.buildPathString(el);
@@ -1450,8 +1481,8 @@ export class TreeRenderer {
             const keyText = keySpan?.textContent || '';
             const valText = valSpan?.dataset.fullValue || valSpan?.textContent || '';
 
-            const matchKey = keyText.toLowerCase().includes(term);
-            const matchVal = valText.toLowerCase().includes(term);
+            const matchKey = matcher(keyText);
+            const matchVal = matcher(valText);
 
             if (matchKey || matchVal) {
                 const path = this.buildPathStringForTableRow(el, keyText);
@@ -1466,7 +1497,66 @@ export class TreeRenderer {
             }
         });
 
+        // Search in array-list-row elements (for compact array layout)
+        const arrayRows = this.container.querySelectorAll('.array-list-row');
+        arrayRows.forEach(row => {
+            if (results.length >= maxResults) return;
+
+            const el = row as HTMLElement;
+            const indexSpan = el.querySelector('.array-list-index');
+            const valSpan = el.querySelector('.array-list-value') as HTMLElement;
+
+            const indexText = indexSpan?.textContent || '';
+            const valText = valSpan?.dataset.fullValue || valSpan?.textContent || '';
+
+            const matchKey = matcher(indexText);
+            const matchVal = matcher(valText);
+
+            if (matchKey || matchVal) {
+                const path = this.buildPathStringForArrayRow(el, indexText);
+
+                results.push({
+                    key: indexText,
+                    value: valSpan ? valText : null,
+                    path: path,
+                    type: matchKey && matchVal ? 'both' : (matchKey ? 'key' : 'value'),
+                    element: el
+                });
+            }
+        });
+
         return results;
+    }
+
+    private buildPathStringForArrayRow(row: HTMLElement, indexText: string): string {
+        // Find parent array-list-card, then traverse up
+        let listCard = row.closest('.array-list-card');
+        if (!listCard) return '$ > ' + indexText;
+
+        const parts: string[] = [indexText];
+
+        // Find the tree-branch containing this list-card
+        let currentBranch = listCard.closest('.tree-branch') as HTMLElement | null;
+
+        while (currentBranch && currentBranch !== this.container) {
+            // Get the node-content of this branch
+            const nodeContent = currentBranch.querySelector(':scope > .node-wrapper > .node-content');
+            if (nodeContent) {
+                const keySpan = nodeContent.querySelector('.key-text');
+                if (keySpan) {
+                    parts.unshift(keySpan.textContent || '');
+                }
+            }
+
+            // Go to the parent of this tree-branch
+            const parentOfBranch = currentBranch.parentElement;
+            if (!parentOfBranch || parentOfBranch === this.container) break;
+
+            // Find the grandparent tree-branch
+            currentBranch = parentOfBranch.closest('.tree-branch') as HTMLElement | null;
+        }
+
+        return '$ > ' + parts.join(' > ');
     }
 
     private buildPathStringForTableRow(row: HTMLElement, keyText: string): string {
@@ -1553,7 +1643,7 @@ export class TreeRenderer {
 
         if (!query.trim()) return 0;
 
-
+        const matcher = this.createMatcher(query);
 
         // Search in node-content elements
         const nodes = this.container.querySelectorAll('.node-content');
@@ -1565,32 +1655,8 @@ export class TreeRenderer {
             const keyText = keySpan?.textContent || '';
             const valText = valSpan?.dataset.fullValue || valSpan?.textContent || '';
 
-            const isRegex = query.startsWith('/') && query.length > 1;
-            const isExact = query.startsWith('"') && query.endsWith('"') && query.length > 2;
-
-            let matchKey = false;
-            let matchVal = false;
-
-            if (isRegex) {
-                try {
-                    const regex = new RegExp(query.slice(1), 'i');
-                    matchKey = regex.test(keyText);
-                    matchVal = regex.test(valText);
-                } catch {
-                    // Fallback to simple include if regex invalid
-                    const term = query.toLowerCase();
-                    matchKey = keyText.toLowerCase().includes(term);
-                    matchVal = valText.toLowerCase().includes(term);
-                }
-            } else if (isExact) {
-                const exactTerm = query.slice(1, -1).toLowerCase();
-                matchKey = keyText.toLowerCase() === exactTerm;
-                matchVal = valText.toLowerCase() === exactTerm;
-            } else {
-                const term = query.toLowerCase();
-                matchKey = keyText.toLowerCase().includes(term);
-                matchVal = valText.toLowerCase().includes(term);
-            }
+            const matchKey = matcher(keyText);
+            const matchVal = matcher(valText);
 
             if (matchKey || matchVal) {
                 el.classList.add('search-match');
@@ -1634,6 +1700,26 @@ export class TreeRenderer {
                 matchKey = keyText.toLowerCase().includes(term);
                 matchVal = valText.toLowerCase().includes(term);
             }
+
+            if (matchKey || matchVal) {
+                el.classList.add('search-match');
+                this.matchedElements.push(el);
+                this.expandParents(el);
+            }
+        });
+
+        // Search in array-list-row elements
+        const arrayRows = this.container.querySelectorAll('.array-list-row');
+        arrayRows.forEach(row => {
+            const el = row as HTMLElement;
+            const indexSpan = el.querySelector('.array-list-index');
+            const valSpan = el.querySelector('.array-list-value') as HTMLElement;
+
+            const indexText = indexSpan?.textContent || '';
+            const valText = valSpan?.dataset.fullValue || valSpan?.textContent || '';
+
+            const matchKey = matcher(indexText);
+            const matchVal = matcher(valText);
 
             if (matchKey || matchVal) {
                 el.classList.add('search-match');

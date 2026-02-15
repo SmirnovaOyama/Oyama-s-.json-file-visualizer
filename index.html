@@ -74,6 +74,35 @@
             </div>
             <div style="flex:1"></div>
             <div class="upload-btn-group">
+
+
+
+
+                <div style="width: 8px;"></div>
+                <button class="action-btn" id="expandAllBtn">Expand All</button>
+                <button class="action-btn" id="collapseAllBtn">Collapse</button>
+
+                <!-- Language Dropdown -->
+                <div class="custom-dropdown" id="langDropdown">
+                    <div class="dropdown-trigger" id="langTrigger">
+                        <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path
+                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                            </path>
+                        </svg>
+                        <span id="langLabel">English</span>
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="langMenu">
+                        <div class="dropdown-item selected" data-value="en">English</div>
+                        <div class="dropdown-item" data-value="zh">简体中文</div>
+                        <div class="dropdown-item" data-value="ja">日本語</div>
+                    </div>
+                </div>
                 <div class="search-wrapper">
                     <div class="search-container">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -100,49 +129,6 @@
                         </div>
                     </div>
                     <div class="search-dropdown" id="searchDropdown"></div>
-                </div>
-
-
-                <div class="zoom-controls">
-                    <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="3">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                    </button>
-                    <div class="zoom-display" id="zoomDisplay">100%</div>
-                    <button class="zoom-btn" id="zoomInBtn" title="Zoom In">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="3">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                    </button>
-                </div>
-                <div style="width: 8px;"></div>
-                <button class="action-btn" id="expandAllBtn">Expand All</button>
-                <button class="action-btn" id="collapseAllBtn">Collapse</button>
-
-                <!-- Language Dropdown -->
-                <div class="custom-dropdown" id="langDropdown">
-                    <div class="dropdown-trigger" id="langTrigger">
-                        <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="2" y1="12" x2="22" y2="12"></line>
-                            <path
-                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
-                            </path>
-                        </svg>
-                        <span id="langLabel">English</span>
-                        <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M6 9l6 6 6-6" />
-                        </svg>
-                    </div>
-                    <div class="dropdown-menu" id="langMenu">
-                        <div class="dropdown-item selected" data-value="en">English</div>
-                        <div class="dropdown-item" data-value="zh">简体中文</div>
-                        <div class="dropdown-item" data-value="ja">日本語</div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -298,6 +284,22 @@
             </svg>
             Delete
         </div>
+    </div>
+
+    <!-- Zoom Controls - Floating Bottom Right -->
+    <div class="zoom-controls">
+        <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+        <div class="zoom-display" id="zoomDisplay">100%</div>
+        <button class="zoom-btn" id="zoomInBtn" title="Zoom In">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

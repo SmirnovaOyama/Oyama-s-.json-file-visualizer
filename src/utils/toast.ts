@@ -29,14 +29,24 @@ export class Toast {
     toast.className = `toast toast-${type}`;
     toast.textContent = message;
 
+    // Limit visible toasts
+    if (this.container!.childElementCount >= 3) {
+      if (this.container!.firstChild) {
+        this.container!.firstChild.remove();
+      }
+    }
+
     this.container!.appendChild(toast);
 
     // Auto remove
     setTimeout(() => {
-      toast.classList.add('toast-out');
-      toast.addEventListener('animationend', () => {
-        toast.remove();
-      });
+      // Check if attached before removing (might have been removed by limit logic)
+      if (toast.isConnected) {
+        toast.classList.add('toast-out');
+        toast.addEventListener('animationend', () => {
+          toast.remove();
+        });
+      }
     }, duration);
   }
 

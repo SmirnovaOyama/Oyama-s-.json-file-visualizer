@@ -1,8 +1,8 @@
 // i18n - Internationalization
 export const i18n = {
     en: {
-        uploadJson: 'Upload JSON',
-        pasteText: 'Paste Text',
+        uploadJson: 'Upload',
+        pasteText: 'Paste',
         download: 'Download',
         copy: 'Copy',
         copied: 'Copied!',
@@ -53,8 +53,8 @@ export const i18n = {
         loadedFromLocal: 'Loaded from local storage'
     },
     zh: {
-        uploadJson: '上传 JSON',
-        pasteText: '粘贴文本',
+        uploadJson: '上传',
+        pasteText: '粘贴',
         download: '下载',
         copy: '复制',
         copied: '已复制!',
